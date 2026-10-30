@@ -1,4 +1,4 @@
-# Your local job assistant
+# JobAssist local setup
 
 Open http://localhost:3000. Your generated login password is in `data/LOCAL-LOGIN.txt`.
 

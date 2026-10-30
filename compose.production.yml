@@ -1,12 +1,7 @@
-# Dossier with Docker Compose (see the installation guide, https://github.com/AienTech/dossier/wiki). Save this
-# file as compose.yml in a folder of its own, put POSTGRES_PASSWORD,
-# DOSSIER_PASSWORD (a hash of your password, from `docker run --rm -it
-# ghcr.io/aientech/dossier hash-password`) and DOSSIER_SECRET in a .env file
-# next to it, then:
-#
-#   docker compose up -d
-#
-# Add COMPOSE_PROFILES=ai to .env to run Ollama for a local model as well.
+# JobAssist production container, built from this repository.
+# Configure .env as described in .env.example, then run:
+# docker compose -f compose.production.yml up --build -d
+# This container path is inherited; local verification used LOCAL-SETUP.md.
 
 services:
   db:
@@ -26,7 +21,10 @@ services:
       retries: 10
 
   app:
-    image: ${DOSSIER_IMAGE:-ghcr.io/aientech/dossier:latest}
+    image: ${DOSSIER_IMAGE:-jobassist:local}
+    build:
+      context: .
+      target: production
     restart: unless-stopped
     depends_on:
       db:

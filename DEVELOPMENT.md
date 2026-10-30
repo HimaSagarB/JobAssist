@@ -1,4 +1,14 @@
-# Developing Dossier
+# Developing JobAssist
+
+## JobAssist local workflow
+
+Start with [LOCAL-SETUP.md](LOCAL-SETUP.md). Our tested local path uses Node 24, embedded PostgreSQL and `npm run local:prepare`, followed by `npm run build -- --webpack` and `npm run local:start`. Use a separate terminal for `npm run local:db`.
+
+JobAssist-specific code lives in `src/lib/search-plan.ts`, `src/app/(app)/search-plan`, `src/app/(app)/ai-connections`, `src/lib/ai/connections.ts`, `scripts/init-local.ts`, `scripts/start-local.mjs`, and `tools/local-db/start.mjs`. The saved-connection browser test is `e2e/ai-connections.spec.ts`.
+
+## Inherited architecture reference
+
+The sections below document the Dossier foundation and its original container workflow. Container-only wording applies to that upstream workflow, not to JobAssist’s local setup. Upstream service addresses, benchmark claims and deployment workflows are not a separate certification of this fork. See [ATTRIBUTION.md](ATTRIBUTION.md).
 
 Next.js 16 (App Router) + Prisma 7 + PostgreSQL 18, run with Docker Compose and Yarn 4. Nothing runs on the host: every command goes through the containers. For installing and running Dossier, see the [README](README.md); for how it's secured, [SECURITY.md](SECURITY.md).
 

@@ -1,4 +1,4 @@
-# Personal job assistant — verified local build
+# JobAssist — verified local build
 
 Updated 30 October 2026.
 

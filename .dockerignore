@@ -17,3 +17,7 @@ playwright-report
 test-results
 e2e/.auth
 data
+
+# Local embedded runtime and private previews
+tools/local-db/node_modules
+outputs

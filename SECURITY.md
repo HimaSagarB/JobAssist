@@ -1,4 +1,6 @@
-# Security
+# Security — JobAssist
+
+This document describes the inherited Dossier architecture used by JobAssist. Technical `DOSSIER_*` names remain for compatibility. JobAssist adds encrypted saved AI connections, kept on this installation and excluded from data exports. Local startup binds the app and database to localhost. Hosted providers still receive task data when selected. See [ATTRIBUTION.md](ATTRIBUTION.md) for provenance.
 
 Dossier is a single-user app you run on your own server. It holds your career history, your job applications and, if you use a hosted model, an AI provider's API key. This page covers what protects that data, what it expects from your setup, and how to report a problem. What Dossier keeps, for how long and who receives what is in [PRIVACY.md](PRIVACY.md).
 
