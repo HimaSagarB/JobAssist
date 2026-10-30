@@ -1,0 +1,18 @@
+import EmbeddedPostgres from 'embedded-postgres';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+const root = resolve(import.meta.dirname, '../..');
+const password = readFileSync(resolve(root, '.env'), 'utf8').match(/^LOCAL_DB_PASSWORD=(.+)$/m)?.[1];
+if (!password) throw new Error('Run npm run local:init first.');
+const directory = resolve(root, 'data/postgres');
+const pg = new EmbeddedPostgres({ databaseDir: directory, user: 'postgres', password, port: 55432, persistent: true, postgresFlags: ['-h', '127.0.0.1'], onLog: () => {}, onError: (error) => console.error(String(error)) });
+if (!existsSync(resolve(directory, 'PG_VERSION'))) await pg.initialise();
+await pg.start();
+const client = pg.getPgClient();
+await client.connect();
+const result = await client.query("SELECT 1 FROM pg_database WHERE datname = 'dossier'");
+await client.end();
+if (!result.rowCount) await pg.createDatabase('dossier');
+console.log('Database ready on 127.0.0.1:55432');
+for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, async () => { await pg.stop(); process.exit(0); });
+setInterval(() => {}, 60000);
