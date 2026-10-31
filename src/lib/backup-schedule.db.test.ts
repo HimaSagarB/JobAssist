@@ -17,7 +17,7 @@ vi.mock("@/lib/prisma", async () => {
 });
 const dataDir = vi.hoisted(() => ({ path: "" }));
 vi.mock("@/lib/env", () => ({
-  env: { get DOSSIER_DATA_DIR() { return dataDir.path; }, DOSSIER_BACKUP_RETENTION_DAYS: 14, DOSSIER_SECRET: "s".repeat(32) },
+  env: { get JOBASSIST_DATA_DIR() { return dataDir.path; }, JOBASSIST_BACKUP_RETENTION_DAYS: 14, JOBASSIST_SECRET: "s".repeat(32) },
 }));
 vi.mock("@/lib/log", () => ({ logServerError: vi.fn() }));
 
@@ -25,7 +25,7 @@ const prisma = () => db.client!;
 const backups = () => readdir(path.join(dataDir.path, "backups")).catch(() => [] as string[]);
 
 beforeEach(async () => {
-  dataDir.path = await mkdtemp(path.join(tmpdir(), "dossier-backups-"));
+  dataDir.path = await mkdtemp(path.join(tmpdir(), "jobassist-backups-"));
   await resetDatabase(prisma());
   await prisma().application.create({ data: { company: "Ledgerly" } });
 });
@@ -44,7 +44,7 @@ describe("nightly backups (E10-7)", () => {
   it("write an export while they're on", async () => {
     const now = new Date(2026, 8, 28, 3, 0);
     expect(await runNightlyBackup(now)).toBe("written");
-    expect(await backups()).toEqual(["dossier-backup-nightly-2026-09-28-030000.json"]);
+    expect(await backups()).toEqual(["jobassist-backup-nightly-2026-09-28-030000.json"]);
     expect(await lastNightlyBackup()).toBeInstanceOf(Date);
   });
 
@@ -57,12 +57,12 @@ describe("nightly backups (E10-7)", () => {
   it("remove backups past the retention", async () => {
     const dir = path.join(dataDir.path, "backups");
     await runNightlyBackup(new Date(2026, 8, 28, 3));
-    const old = path.join(dir, "dossier-backup-nightly-2026-09-01-030000.json");
+    const old = path.join(dir, "jobassist-backup-nightly-2026-09-01-030000.json");
     await writeFile(old, "{}");
     const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     await utimes(old, monthAgo, monthAgo);
     expect(await pruneBackups(new Date())).toBe(1);
-    expect(await backups()).toEqual(["dossier-backup-nightly-2026-09-28-030000.json"]);
+    expect(await backups()).toEqual(["jobassist-backup-nightly-2026-09-28-030000.json"]);
   });
 
   it("keep a failure for the settings row, and clear it after a success", async () => {

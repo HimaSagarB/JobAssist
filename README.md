@@ -4,7 +4,7 @@
 
 JobAssist is HimaSagarB’s personal job-search assistant: maintain a professional profile, find relevant openings, prepare tailored documents, review applications, and track progress in one place.
 
-This project extends the open-source Dossier foundation with our own search preferences, saved AI connections, local runtime setup, and visual identity. It is a working local application, with live account configuration still required before real AI generation and email submission.
+It is a working local application, with live account configuration still required before real AI generation and email submission.
 
 ## Our additions
 
@@ -15,7 +15,7 @@ This project extends the open-source Dossier foundation with our own search pref
 | Provider shortcuts | OpenAI, Gemini, Groq and DeepSeek endpoint shortcuts, alongside existing Anthropic, Mistral, local-model and custom compatible API formats. |
 | Local startup | Persistent local PostgreSQL, configuration initialization, migrations and a production launcher without requiring Docker for the tested local setup. |
 | JobAssist interface | A custom briefcase/checkmark logo, indigo accents, cooler surfaces, clearer navigation and refreshed sign-in page. |
-| Workflow verification | Local production smoke checks and browser coverage for saved-account switching alongside the inherited application workflows. |
+| Workflow verification | Local production smoke checks and browser coverage for saved-account switching alongside the application workflows. |
 
 ## Current interface
 
@@ -32,7 +32,7 @@ This screenshot shows our actual local build, before adding personal credentials
 5. **Approve and send:** with Google configured, review the recipient and application email before confirming Gmail submission.
 6. **Track:** manage application stages, employer replies and interviews.
 
-Profile import, document generation/editing, PDF rendering, job-source adapters, application tracking, and Gmail/Calendar integration originate in Dossier. See [ATTRIBUTION.md](ATTRIBUTION.md) for the boundary between the foundation and our work.
+Profile import, document generation/editing, PDF rendering, job-source adapters, application tracking, and Gmail/Calendar integration are part of the application. See [ATTRIBUTION.md](ATTRIBUTION.md) for third-party source notices.
 
 ## Run locally
 
@@ -62,7 +62,7 @@ For later starts, run `npm run local:db` and `npm run local:start` in separate t
 
 ## Verification and limitations
 
-The recorded local validation passed a production build, lint, 35 focused unit tests and 17 browser tests. These browser tests use isolated databases and **fake AI, job-source and Google services**. Production login was also checked independently. These results are not a claim that current GitHub CI is green.
+The current audit passed a production build, lint, **1,272 unit/interface tests** and **422 database tests**. **136 Chromium checks** and the actual local production login also passed. See [AUDIT.md](AUDIT.md) for scope. Browser tests use isolated databases and **fake AI, job-source and Google services**; they do not certify live provider output or employer delivery.
 
 - Real AI quality and Gmail delivery require your profile, credentials and live verification.
 - Provider switching is manual; quotas and billing still apply. Existing tasks may finish on the previously selected connection.
@@ -72,7 +72,7 @@ The recorded local validation passed a production build, lint, 35 focused unit t
 - Scheduled tasks require the computer and app to remain running.
 - This is a single-user, desktop-oriented app. It cannot guarantee interviews or a job.
 
-See [BUILD-NOTES.md](BUILD-NOTES.md) for the recorded validation scope.
+See [BUILD-NOTES.md](BUILD-NOTES.md) and [AUDIT.md](AUDIT.md) for recorded validation scope and remaining work.
 
 ## Planned improvements
 
@@ -86,4 +86,4 @@ Read [PRIVACY.md](PRIVACY.md) and [SECURITY.md](SECURITY.md). Keep your local da
 
 ## Ownership and license
 
-JobAssist is maintained by [HimaSagarB](https://github.com/HimaSagarB). It is a modified work based on [Dossier by AienTech](https://github.com/AienTech/dossier), distributed under **AGPL-3.0-only**. The upstream license and attribution are retained. See [LICENSE](LICENSE) and [ATTRIBUTION.md](ATTRIBUTION.md).
+JobAssist is maintained by [HimaSagarB](https://github.com/HimaSagarB) and distributed under **AGPL-3.0-only**. Third-party source notices are in [ATTRIBUTION.md](ATTRIBUTION.md); license terms are in [LICENSE](LICENSE).

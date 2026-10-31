@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/env", () => ({ env: { DOSSIER_SECRET: "s".repeat(40), DOSSIER_PASSWORD: "argon2id:m=19456,t=2,p=1:c2FsdA:aGFzaA" } }));
+vi.mock("@/lib/env", () => ({ env: { JOBASSIST_SECRET: "s".repeat(40), JOBASSIST_PASSWORD: "argon2id:m=19456,t=2,p=1:c2FsdA:aGFzaA" } }));
 const settings = vi.hoisted(() => ({ connectorEnabledAt: "2026-10-23T09:00:00.000Z" as string | null }));
 vi.mock("@/lib/settings-data", () => ({ loadSettings: async () => settings }));
 const db = vi.hoisted(() => ({ postingSearch: { findUnique: vi.fn() }, postingScore: { upsert: vi.fn() } }));
@@ -33,7 +33,7 @@ async function accessToken(): Promise<string> {
 
 const call = (body: unknown, token?: string) =>
   POST(
-    new Request("https://dossier.example/api/mcp", {
+    new Request("https://jobassist.example/api/mcp", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -67,26 +67,26 @@ describe("the Claude connector at /api/mcp (#221)", () => {
     const token = await accessToken();
     settings.connectorEnabledAt = null;
     expect((await call({ jsonrpc: "2.0", id: 1, method: "tools/list" }, token)).status).toBe(404);
-    expect((await GET(new Request("https://dossier.example/api/mcp"))).status).toBe(404);
+    expect((await GET(new Request("https://jobassist.example/api/mcp"))).status).toBe(404);
   });
 
   it("asks Claude to sign in, and says where to find out how", async () => {
     const response = await call({ jsonrpc: "2.0", id: 1, method: "tools/list" });
     expect(response.status).toBe(401);
     expect(response.headers.get("www-authenticate")).toBe(
-      'Bearer resource_metadata="https://dossier.example/.well-known/oauth-protected-resource/api/mcp", scope="dossier"',
+      'Bearer resource_metadata="https://jobassist.example/.well-known/oauth-protected-resource/api/mcp", scope="jobassist"',
     );
     expect((await call({ jsonrpc: "2.0", id: 1, method: "tools/list" }, "not-a-token")).status).toBe(401);
   });
 
-  it("answers MCP with Dossier's tools once signed in, and none that delete, archive or send", async () => {
+  it("answers MCP with JobAssist's tools once signed in, and none that delete, archive or send", async () => {
     const token = await accessToken();
     const init = await call(
       { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "test", version: "1" } } },
       token,
     );
     expect(init.status).toBe(200);
-    expect(await answer(init)).toMatchObject({ result: { serverInfo: { name: "dossier" } } });
+    expect(await answer(init)).toMatchObject({ result: { serverInfo: { name: "jobassist" } } });
 
     const { result } = await answer(await call({ jsonrpc: "2.0", id: 2, method: "tools/list" }, token));
     expect(result?.tools?.map((entry) => entry.name).sort()).toEqual([
@@ -108,7 +108,7 @@ describe("the Claude connector at /api/mcp (#221)", () => {
     const { isError, text } = await tool("get_profile", {});
     expect(isError).toBe(false);
     const profile = JSON.parse(text) as Record<string, unknown>;
-    expect(profile).toMatchObject({ name: demoProfile().basics.name, link: "https://dossier.example/profile" });
+    expect(profile).toMatchObject({ name: demoProfile().basics.name, link: "https://jobassist.example/profile" });
     expect(text).not.toContain(demoProfile().basics.email);
     expect(text).not.toContain(demoProfile().basics.phone || "no phone");
   });
@@ -118,10 +118,10 @@ describe("the Claude connector at /api/mcp (#221)", () => {
     expect(isError).toBe(false);
     const { city } = demoProfile().basics;
     expect(searches.ran.at(-1)).toMatchObject({ keywords: "product designer", place: city, radiusKm: 25, remoteOnly: false, postedWithin: "month" });
-    expect(JSON.parse(text)).toMatchObject({ search_id: "s1", searched: `product designer in ${city}`, link: "https://dossier.example/jobs?search=s1" });
+    expect(JSON.parse(text)).toMatchObject({ search_id: "s1", searched: `product designer in ${city}`, link: "https://jobassist.example/jobs?search=s1" });
   });
 
-  it("asks Claude to write the application itself when Dossier has no AI model", async () => {
+  it("asks Claude to write the application itself when JobAssist has no AI model", async () => {
     const { isError, text } = await tool("draft_application", { posting_text: "Product designer at Acme" });
     expect(isError).toBe(true);
     expect(text).toContain("save_application");

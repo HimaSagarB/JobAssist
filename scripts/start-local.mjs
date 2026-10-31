@@ -9,7 +9,7 @@ cpSync(resolve(root, '.next/static'), resolve(standalone, '.next/static'), { rec
 const child = spawn(process.execPath, ['--env-file=' + resolve(root, '.env'), resolve(standalone, 'server.js')], {
   cwd: root,
   stdio: 'inherit',
-  env: { ...process.env, HOSTNAME: '127.0.0.1', PORT: '3000', DOSSIER_DATA_DIR: resolve(root, 'data') },
+  env: { ...process.env, HOSTNAME: '127.0.0.1', PORT: '3000', JOBASSIST_DATA_DIR: resolve(root, 'data') },
 });
 for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => child.kill(signal));
 child.on('exit', code => process.exit(code ?? 0));

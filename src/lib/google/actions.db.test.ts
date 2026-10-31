@@ -17,7 +17,7 @@ vi.mock("@/lib/auth/session", () => ({
 }));
 vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
 vi.mock("@/lib/env", () => ({
-  env: { DOSSIER_SECRET: "s".repeat(40), DOSSIER_GOOGLE_CLIENT_ID: "client", DOSSIER_GOOGLE_CLIENT_SECRET: "secret", DOSSIER_DATA_DIR: "/tmp" },
+  env: { JOBASSIST_SECRET: "s".repeat(40), JOBASSIST_GOOGLE_CLIENT_ID: "client", JOBASSIST_GOOGLE_CLIENT_SECRET: "secret", JOBASSIST_DATA_DIR: "/tmp" },
 }));
 const ai = vi.hoisted(() => ({ provider: undefined as unknown, ready: true }));
 vi.mock("@/lib/ai", () => ({ getAiProvider: async () => ai.provider }));
@@ -232,7 +232,7 @@ describe("Settings → Google (E15-1)", () => {
     expect(await disconnectGoogleAccount({})).toMatchObject({ ok: true, toast: "Disconnected from Google." });
     expect(calls.find((call) => call.url.includes("/revoke"))?.body).toBe("token=refresh");
     expect(await googleConnection()).toEqual({ status: "disconnected" });
-    // Mail already in Dossier stays.
+    // Mail already in JobAssist stays.
     expect(await prisma().emailMessage.count()).toBe(3);
   });
 });

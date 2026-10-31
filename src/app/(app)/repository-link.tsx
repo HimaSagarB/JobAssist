@@ -7,9 +7,9 @@ import { REPOSITORY_URL } from "@/lib/releases";
 
 import { useSidebarCollapsed } from "./sidebar-frame";
 
-const LABEL = "Built on Dossier";
+const LABEL = "JobAssist on GitHub";
 
-/** The sidebar's link to Dossier's repository, for credits and support. */
+/** The sidebar's link to JobAssist's repository, for credits and support. */
 export function RepositoryLink() {
   const collapsed = useSidebarCollapsed();
   return (

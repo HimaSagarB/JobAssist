@@ -21,7 +21,7 @@ import { saveSettings } from "@/lib/settings-data";
 const postingRef = z.object({ source: z.enum(JOB_SOURCES), externalId: z.string().min(1).max(500) });
 const searchId = z.string().min(1).max(100);
 
-/** "I understand" under the Bundesagentur für Arbeit's note (#223), for a BA choice made before it, or by DOSSIER_JOBS_SOURCE. */
+/** "I understand" under the Bundesagentur für Arbeit's note (#223), for a BA choice made before it, or by JOBASSIST_JOBS_SOURCE. */
 export const acceptArbeitsagenturNote = action(z.object({}), async () => {
   const { arbeitsagentur } = await loadJobSearchConfig();
   if (!arbeitsagentur.offered) throw new ActionError("The Bundesagentur für Arbeit isn't offered on this server.");
@@ -79,7 +79,7 @@ export const restorePosting = action(postingRef.extend({ saved: z.boolean() }), 
 /**
  * "Score" (#208): how well a posting fits the profile, in the background; a
  * scoring under way is followed, not started again. With the Claude connector
- * on and no AI model of Dossier's own, a Claude chat scores it instead (#221).
+ * on and no AI model of JobAssist's own, a Claude chat scores it instead (#221).
  */
 export const startScoringPosting = action(z.object({ posting: foundPostingSchema }), async ({ posting }): Promise<{ jobId: string } | { handoff: string }> => {
   if (await handsOffToClaude(await isAiUsable())) return { handoff: await handOffFoundPosting(posting, "score") };

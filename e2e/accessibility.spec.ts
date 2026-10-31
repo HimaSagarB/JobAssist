@@ -70,8 +70,8 @@ for (const path of SCREENS) {
 test.describe("dark, with the sidebar collapsed", () => {
   test.beforeEach(async ({ context, baseURL }) => {
     await context.addCookies([
-      { name: "dossier_theme", value: "dark", url: baseURL! },
-      { name: "dossier_sidebar", value: "collapsed", url: baseURL! },
+      { name: "jobassist_theme", value: "dark", url: baseURL! },
+      { name: "jobassist_sidebar", value: "collapsed", url: baseURL! },
     ]);
   });
 
@@ -97,8 +97,8 @@ test.describe("dark, with the sidebar collapsed", () => {
     await page.goto(application);
     await page.getByRole("button", { name: "More actions" }).click();
     await expectAccessible(page);
-    await context.clearCookies({ name: "dossier_session" });
-    await context.addCookies([{ name: "dossier_theme", value: "dark", url: baseURL! }]);
+    await context.clearCookies({ name: "jobassist_session" });
+    await context.addCookies([{ name: "jobassist_theme", value: "dark", url: baseURL! }]);
     await page.goto("/login");
     await expectAccessible(page);
   });

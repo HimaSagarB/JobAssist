@@ -1,6 +1,6 @@
 {
   "name": "jobassist",
-  "version": "1.10.0",
+  "version": "0.1.0",
   "private": true,
   "license": "AGPL-3.0-only",
   "scripts": {
@@ -16,7 +16,7 @@
     "hash-password": "tsx scripts/hash-password.ts",
     "local:init": "tsx scripts/init-local.ts",
     "local:db": "node tools/local-db/start.mjs",
-    "local:prepare": "prisma generate --config prisma7.config.ts && prisma migrate deploy --config prisma7.config.ts && prisma db seed --config prisma7.config.ts",
+    "local:prepare": "prisma generate --config prisma.config.ts && prisma migrate deploy --config prisma.config.ts && prisma db seed --config prisma.config.ts",
     "local:start": "node scripts/start-local.mjs"
   },
   "dependencies": {
@@ -73,5 +73,14 @@
   "packageManager": "yarn@4.18.1+sha512.b2e1e7524f654f2749d32b4ebcb4622473cb5bcbc485df2007e12a154e50162a4d795526768bc5f5b8f81717bfd79deb2472813d86fb5ae2eb551fa9c872b08f",
   "resolutions": {
     "mysql2@npm:3.15.3": "3.24.4"
+  },
+  "description": "Personal job search assistant with tailored applications and saved AI connections",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/HimaSagarB/JobAssist.git"
+  },
+  "homepage": "https://github.com/HimaSagarB/JobAssist#readme",
+  "bugs": {
+    "url": "https://github.com/HimaSagarB/JobAssist/issues"
   }
 }

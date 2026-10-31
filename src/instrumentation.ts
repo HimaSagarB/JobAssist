@@ -30,7 +30,7 @@ export async function register() {
     const { startStartupsSchedule } = await import("@/lib/startups/schedule");
     startStartupsSchedule();
 
-    // DOSSIER_JOBS_SOURCE=arbeitsagentur: the log says what that choice means (#223).
+    // JOBASSIST_JOBS_SOURCE=arbeitsagentur: the log says what that choice means (#223).
     const { arbeitsagenturStartupNotice, loadJobSearchConfig } = await import("@/lib/job-search/config");
     try {
       const notice = arbeitsagenturStartupNotice(await loadJobSearchConfig());
@@ -39,7 +39,7 @@ export async function register() {
       logServerError("job search", error);
     }
 
-    // DOSSIER_TELEMETRY, when set, is the usage ping's answer on record (#172).
+    // JOBASSIST_TELEMETRY, when set, is the usage ping's answer on record (#172).
     // Then the log says what the ping sends while it's on, or how to answer
     // while nobody has.
     const { recordEnvChoice, usagePingNotice } = await import("@/lib/usage-ping");

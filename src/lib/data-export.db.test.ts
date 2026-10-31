@@ -9,7 +9,7 @@ import { seedDemo } from "../../prisma/seed/demo";
 
 import { buildExport, EXPORT_SCHEMA_VERSION, exportFileName, exportSchema } from "./data-export";
 
-vi.mock("@/lib/env", () => ({ env: { DOSSIER_SECRET: "s".repeat(32) } }));
+vi.mock("@/lib/env", () => ({ env: { JOBASSIST_SECRET: "s".repeat(32) } }));
 
 const client = createTestClient();
 const prisma = () => client;
@@ -29,7 +29,7 @@ describe("buildExport (E10-4)", () => {
     const data = await buildExport(prisma(), { now });
     const file = exportSchema.parse(JSON.parse(JSON.stringify(data)));
 
-    expect(file).toMatchObject({ format: "dossier-export", schemaVersion: EXPORT_SCHEMA_VERSION, exportedAt: now });
+    expect(file).toMatchObject({ format: "jobassist-export", schemaVersion: EXPORT_SCHEMA_VERSION, exportedAt: now });
     expect(file.profile.skills.length).toBe(await prisma().skill.count());
     expect(file.profile.experience.flatMap((entry) => entry.skillIds).length).toBe(await prisma().experienceSkill.count());
     // Projects with their skills (PRO-13).
@@ -99,7 +99,7 @@ describe("buildExport (E10-4)", () => {
   });
 
   it("names the file after the day", () => {
-    expect(exportFileName(new Date(2026, 8, 7, 23))).toBe("dossier-export-2026-09-07.json");
+    expect(exportFileName(new Date(2026, 8, 7, 23))).toBe("jobassist-export-2026-09-07.json");
   });
 
   it("refuses files it doesn't know", () => {

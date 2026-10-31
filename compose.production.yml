@@ -8,20 +8,20 @@ services:
     image: postgres:18-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: dossier
+      POSTGRES_USER: jobassist
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
-      POSTGRES_DB: dossier
+      POSTGRES_DB: jobassist
     volumes:
       # Postgres 18+ keeps data in a versioned subdirectory, so mount the parent.
       - pgdata:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dossier -d dossier"]
+      test: ["CMD-SHELL", "pg_isready -U jobassist -d jobassist"]
       interval: 5s
       timeout: 5s
       retries: 10
 
   app:
-    image: ${DOSSIER_IMAGE:-jobassist:local}
+    image: ${JOBASSIST_IMAGE:-jobassist:local}
     build:
       context: .
       target: production
@@ -30,35 +30,35 @@ services:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://dossier:${POSTGRES_PASSWORD}@db:5432/dossier
-      DOSSIER_PASSWORD: ${DOSSIER_PASSWORD:?Set DOSSIER_PASSWORD in .env to a hash from hash-password}
-      DOSSIER_SECRET: ${DOSSIER_SECRET:?Set DOSSIER_SECRET in .env}
-      DOSSIER_BACKUP_RETENTION_DAYS: ${DOSSIER_BACKUP_RETENTION_DAYS:-}
+      DATABASE_URL: postgresql://jobassist:${POSTGRES_PASSWORD}@db:5432/jobassist
+      JOBASSIST_PASSWORD: ${JOBASSIST_PASSWORD:?Set JOBASSIST_PASSWORD in .env to a hash from hash-password}
+      JOBASSIST_SECRET: ${JOBASSIST_SECRET:?Set JOBASSIST_SECRET in .env}
+      JOBASSIST_BACKUP_RETENTION_DAYS: ${JOBASSIST_BACKUP_RETENTION_DAYS:-}
       # Your time zone, e.g. Europe/Berlin: nightly backups run at 03:00 in it.
       TZ: ${TZ:-UTC}
-      DOSSIER_AI_PROVIDER: ${DOSSIER_AI_PROVIDER:-}
-      DOSSIER_AI_URL: ${DOSSIER_AI_URL:-}
-      DOSSIER_AI_MODEL: ${DOSSIER_AI_MODEL:-}
-      DOSSIER_AI_KEY: ${DOSSIER_AI_KEY:-}
-      DOSSIER_AI_TIMEOUT_SECONDS: ${DOSSIER_AI_TIMEOUT_SECONDS:-}
-      # The daily usage ping: unset, Dossier asks after sign-in; on or off answers in advance (see Privacy in the wiki).
-      DOSSIER_TELEMETRY: ${DOSSIER_TELEMETRY:-}
+      JOBASSIST_AI_PROVIDER: ${JOBASSIST_AI_PROVIDER:-}
+      JOBASSIST_AI_URL: ${JOBASSIST_AI_URL:-}
+      JOBASSIST_AI_MODEL: ${JOBASSIST_AI_MODEL:-}
+      JOBASSIST_AI_KEY: ${JOBASSIST_AI_KEY:-}
+      JOBASSIST_AI_TIMEOUT_SECONDS: ${JOBASSIST_AI_TIMEOUT_SECONDS:-}
+      # The daily usage ping: unset, JobAssist asks after sign-in; on or off answers in advance (see Privacy in the wiki).
+      JOBASSIST_TELEMETRY: ${JOBASSIST_TELEMETRY:-}
       # Defaults for Settings → Job search.
-      DOSSIER_JOBS_SOURCE: ${DOSSIER_JOBS_SOURCE:-}
-      DOSSIER_JSEARCH_KEY: ${DOSSIER_JSEARCH_KEY:-}
-      DOSSIER_JSEARCH_HOST: ${DOSSIER_JSEARCH_HOST:-}
-      DOSSIER_ADZUNA_APP_ID: ${DOSSIER_ADZUNA_APP_ID:-}
-      DOSSIER_ADZUNA_KEY: ${DOSSIER_ADZUNA_KEY:-}
-      DOSSIER_FREEHIRE_URL: ${DOSSIER_FREEHIRE_URL:-}
-      DOSSIER_JOBS_ARBEITSAGENTUR: ${DOSSIER_JOBS_ARBEITSAGENTUR:-}
+      JOBASSIST_JOBS_SOURCE: ${JOBASSIST_JOBS_SOURCE:-}
+      JOBASSIST_JSEARCH_KEY: ${JOBASSIST_JSEARCH_KEY:-}
+      JOBASSIST_JSEARCH_HOST: ${JOBASSIST_JSEARCH_HOST:-}
+      JOBASSIST_ADZUNA_APP_ID: ${JOBASSIST_ADZUNA_APP_ID:-}
+      JOBASSIST_ADZUNA_KEY: ${JOBASSIST_ADZUNA_KEY:-}
+      JOBASSIST_FREEHIRE_URL: ${JOBASSIST_FREEHIRE_URL:-}
+      JOBASSIST_JOBS_ARBEITSAGENTUR: ${JOBASSIST_JOBS_ARBEITSAGENTUR:-}
       # Gmail and Calendar: a Google OAuth client (or enter it in Settings → Google).
-      DOSSIER_GOOGLE_CLIENT_ID: ${DOSSIER_GOOGLE_CLIENT_ID:-}
-      DOSSIER_GOOGLE_CLIENT_SECRET: ${DOSSIER_GOOGLE_CLIENT_SECRET:-}
-      # The address Dossier is reached at, for Google's redirect.
-      DOSSIER_PUBLIC_URL: ${DOSSIER_PUBLIC_URL:-}
+      JOBASSIST_GOOGLE_CLIENT_ID: ${JOBASSIST_GOOGLE_CLIENT_ID:-}
+      JOBASSIST_GOOGLE_CLIENT_SECRET: ${JOBASSIST_GOOGLE_CLIENT_SECRET:-}
+      # The address JobAssist is reached at, for Google's redirect.
+      JOBASSIST_PUBLIC_URL: ${JOBASSIST_PUBLIC_URL:-}
     # Only on the server itself: put a reverse proxy with HTTPS in front.
     ports:
-      - "127.0.0.1:${DOSSIER_PORT:-3000}:3000"
+      - "127.0.0.1:${JOBASSIST_PORT:-3000}:3000"
     volumes:
       - data:/data
     # Room for Chromium, which prints the PDFs.
@@ -69,7 +69,7 @@ services:
       - "host.docker.internal:host-gateway"
 
   # A local model, with COMPOSE_PROFILES=ai in .env: `docker compose up -d`,
-  # then pull one (see "Choosing an AI provider" in the wiki). Dossier reaches it at http://ollama:11434.
+  # then pull one (see "Choosing an AI provider" in the wiki). JobAssist reaches it at http://ollama:11434.
   ollama:
     profiles: [ai]
     image: ollama/ollama:0.40.10

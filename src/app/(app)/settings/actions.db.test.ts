@@ -37,7 +37,7 @@ vi.mock("@/lib/prisma", async () => {
 vi.mock("@/lib/auth/session", () => ({
   getSession: async () => ({ persistent: false, issuedAt: new Date(), expiresAt: new Date(Date.now() + 60_000) }),
 }));
-vi.mock("@/lib/env", () => ({ env: { DOSSIER_SECRET: "a".repeat(32) } }));
+vi.mock("@/lib/env", () => ({ env: { JOBASSIST_SECRET: "a".repeat(32) } }));
 // The real config and key handling, with a mock model behind them.
 const provider = vi.hoisted(() => ({ current: undefined as unknown }));
 vi.mock("@/lib/ai", async (importOriginal) => ({
@@ -242,7 +242,7 @@ describe("the Claude connector (#221)", () => {
 
     // Disconnect Claude: a new time, so every token stops working.
     await new Promise((resolve) => setTimeout(resolve, 5));
-    expect(await disconnectClaude({})).toMatchObject({ ok: true, toast: "Claude is disconnected. Connect it again from Claude to use Dossier there." });
+    expect(await disconnectClaude({})).toMatchObject({ ok: true, toast: "Claude is disconnected. Connect it again from Claude to use JobAssist there." });
     expect((await settings()).connectorEnabledAt).not.toBe(since);
 
     await setConnector({ on: false });

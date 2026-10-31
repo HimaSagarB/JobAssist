@@ -18,6 +18,6 @@ Original repository: https://github.com/AienTech/dossier
 
 ## License and compatibility
 
-The AGPL-3.0 license in LICENSE is retained. Existing third-party font licenses remain in src/fonts. Historical technical identifiers such as DOSSIER_* environment variables and the dossier database name remain for compatibility; they do not identify the current product name.
+The AGPL-3.0 license in LICENSE is retained. Existing third-party font licenses remain in src/fonts. Active environment settings use JOBASSIST_*. Existing local database names and cryptographic domain labels are preserved where changing them would lose access to existing data. These compatibility values are not product branding.
 
-Legacy screenshots in .github/images and unused static assets were inherited from Dossier. They are not evidence of a JobAssist live run. JobAssist’s README uses docs/images/jobassist-ai-connections.png, captured from our own build.
+Inherited marketing screenshots were removed from the repository. JobAssist’s README uses docs/images/jobassist-ai-connections.png, captured from our own build.

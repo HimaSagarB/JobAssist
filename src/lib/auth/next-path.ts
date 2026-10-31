@@ -1,4 +1,4 @@
-const BASE = "http://dossier.invalid";
+const BASE = "http://jobassist.invalid";
 
 /**
  * Where to go after signing in: `next` when it's a page of this app (other

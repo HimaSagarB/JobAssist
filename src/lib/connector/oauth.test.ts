@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const env = vi.hoisted(() => ({ DOSSIER_SECRET: "s".repeat(40), DOSSIER_PASSWORD: "argon2id:m=19456,t=2,p=1:c2FsdA:aGFzaA" }));
+const env = vi.hoisted(() => ({ JOBASSIST_SECRET: "s".repeat(40), JOBASSIST_PASSWORD: "argon2id:m=19456,t=2,p=1:c2FsdA:aGFzaA" }));
 vi.mock("@/lib/env", () => ({ env }));
 const settings = vi.hoisted(() => ({ connectorEnabledAt: "2026-10-23T09:00:00.000Z" as string | null }));
 vi.mock("@/lib/settings-data", () => ({ loadSettings: async () => settings }));
@@ -24,13 +24,13 @@ const VERIFIER = "v".repeat(50);
 
 async function signIn(redirectUri = CLAUDE) {
   const clientId = await registerClient({ name: "Claude", redirectUris: [redirectUri] });
-  const code = await issueCode({ clientId, redirectUri, codeChallenge: challengeOf(VERIFIER), resource: "https://dossier.example/api/mcp" });
+  const code = await issueCode({ clientId, redirectUri, codeChallenge: challengeOf(VERIFIER), resource: "https://jobassist.example/api/mcp" });
   return { clientId, code };
 }
 
 beforeEach(() => {
   settings.connectorEnabledAt = "2026-10-23T09:00:00.000Z";
-  env.DOSSIER_PASSWORD = "argon2id:m=19456,t=2,p=1:c2FsdA:aGFzaA";
+  env.JOBASSIST_PASSWORD = "argon2id:m=19456,t=2,p=1:c2FsdA:aGFzaA";
 });
 
 describe("the Claude connector's sign-in (#221)", () => {
@@ -58,7 +58,7 @@ describe("the Claude connector's sign-in (#221)", () => {
   it("trades a code for tokens with the PKCE verifier, and refreshes them", async () => {
     const { clientId, code } = await signIn();
     const tokens = await exchangeCode({ code, clientId, redirectUri: CLAUDE, verifier: VERIFIER });
-    expect(tokens).toMatchObject({ token_type: "Bearer", expires_in: 3600, scope: "dossier" });
+    expect(tokens).toMatchObject({ token_type: "Bearer", expires_in: 3600, scope: "jobassist" });
     expect(await verifyAccessToken(tokens.access_token)).toEqual({ clientId });
     // A refresh token isn't an access token.
     expect(await verifyAccessToken(tokens.refresh_token)).toBeNull();
@@ -99,22 +99,22 @@ describe("the Claude connector's sign-in (#221)", () => {
     settings.connectorEnabledAt = "2026-10-23T11:00:00.000Z";
     const again = await signIn();
     const againTokens = await exchangeCode({ code: again.code, clientId: again.clientId, redirectUri: CLAUDE, verifier: VERIFIER });
-    env.DOSSIER_PASSWORD = "argon2id:m=19456,t=2,p=1:c2FsdA:bmV3";
+    env.JOBASSIST_PASSWORD = "argon2id:m=19456,t=2,p=1:c2FsdA:bmV3";
     expect(await verifyAccessToken(againTokens.access_token)).toBeNull();
   });
 
   it("describes itself at the addresses Claude looks for", () => {
-    expect(authorizationServerMetadata("https://dossier.example")).toMatchObject({
-      issuer: "https://dossier.example",
-      authorization_endpoint: "https://dossier.example/oauth/authorize",
-      token_endpoint: "https://dossier.example/api/oauth/token",
-      registration_endpoint: "https://dossier.example/api/oauth/register",
+    expect(authorizationServerMetadata("https://jobassist.example")).toMatchObject({
+      issuer: "https://jobassist.example",
+      authorization_endpoint: "https://jobassist.example/oauth/authorize",
+      token_endpoint: "https://jobassist.example/api/oauth/token",
+      registration_endpoint: "https://jobassist.example/api/oauth/register",
       code_challenge_methods_supported: ["S256"],
       token_endpoint_auth_methods_supported: ["none"],
     });
-    expect(protectedResourceMetadata("https://dossier.example")).toMatchObject({
-      resource: "https://dossier.example/api/mcp",
-      authorization_servers: ["https://dossier.example"],
+    expect(protectedResourceMetadata("https://jobassist.example")).toMatchObject({
+      resource: "https://jobassist.example/api/mcp",
+      authorization_servers: ["https://jobassist.example"],
     });
   });
 });

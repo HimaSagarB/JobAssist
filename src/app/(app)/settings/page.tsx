@@ -94,14 +94,14 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
           />
         </>
       ) : section === "claude" ? (
-        <ConnectorSection initial={{ on: settings.connectorEnabledAt !== null }} address={mcpUrl(env.DOSSIER_PUBLIC_URL ?? (await requestOrigin()))} />
+        <ConnectorSection initial={{ on: settings.connectorEnabledAt !== null }} address={mcpUrl(env.JOBASSIST_PUBLIC_URL ?? (await requestOrigin()))} />
       ) : section === "data" ? (
         <DataSection
           hasApiKey={[settings.apiKeyEnc, settings.jsearchKeyEnc, settings.adzunaKeyEnc].some((key) => key !== null)}
           exportName={exportFileName()}
           backups={{
             on: settings.nightlyBackup,
-            retentionDays: env.DOSSIER_BACKUP_RETENTION_DAYS,
+            retentionDays: env.JOBASSIST_BACKUP_RETENTION_DAYS,
             dir: backupsDir(),
             lastRun: whenRan(await lastNightlyBackup()),
             problem: settings.backupProblem,
@@ -206,7 +206,7 @@ async function aboutFacts(): Promise<AboutFacts> {
     { label: "Version", value: appVersion },
     { label: "Server", value: host },
     { label: "Database", value: `PostgreSQL · ${formatBytes(Number(database.size))}` },
-    { label: "Sign-in", value: "set via DOSSIER_PASSWORD" },
+    { label: "Sign-in", value: "set via JOBASSIST_PASSWORD" },
     { label: "AI", value: [providerOption(ai.provider).name, ai.model].filter(Boolean).join(" · ") },
     { label: "Applications", value: String(applications) },
   ];

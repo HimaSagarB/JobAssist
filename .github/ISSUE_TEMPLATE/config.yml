@@ -2,7 +2,7 @@ blank_issues_enabled: false
 contact_links:
   - name: Help installing JobAssist
     url: https://github.com/HimaSagarB/JobAssist/blob/main/LOCAL-SETUP.md
-    about: Step-by-step guides for Docker, Docker Compose, Node.js, an Ubuntu server, CapRover, Coolify and Dokploy.
+    about: Verified local setup, service configuration and restart instructions.
   - name: Troubleshooting
     url: https://github.com/HimaSagarB/JobAssist/blob/main/LOCAL-SETUP.md
     about: What to do about the problems people run into most.

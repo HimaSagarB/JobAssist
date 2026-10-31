@@ -12,12 +12,12 @@ import { env } from "@/lib/env";
 import { deriveKey } from "@/lib/keys";
 
 // Sessions are stateless: the cookie holds an encrypted token (JWE,
-// A256GCM with a key derived from DOSSIER_SECRET), so nothing is stored on
+// A256GCM with a key derived from JOBASSIST_SECRET), so nothing is stored on
 // the server, and tampering or a different secret makes it invalid. Each
-// token also carries a fingerprint of DOSSIER_PASSWORD (the password's
+// token also carries a fingerprint of JOBASSIST_PASSWORD (the password's
 // hash), so changing the password and restarting signs everyone out (AUTH-6).
 
-export const SESSION_COOKIE = "dossier_session";
+export const SESSION_COOKIE = "jobassist_session";
 
 const HOUR = 60 * 60;
 /** How long a sign-in lasts: 24 hours for a browser session (decision in #27), 30 days with "Keep me signed in". */
@@ -33,17 +33,17 @@ export type Session = {
 
 type TokenOptions = {
   key: Uint8Array;
-  /** passwordFingerprint() of the current DOSSIER_PASSWORD. */
+  /** passwordFingerprint() of the current JOBASSIST_PASSWORD. */
   fingerprint: string;
   now?: Date;
 };
 
 /**
- * A short HMAC of DOSSIER_PASSWORD, keyed from DOSSIER_SECRET. It identifies
+ * A short HMAC of JOBASSIST_PASSWORD, keyed from JOBASSIST_SECRET. It identifies
  * the password a session was created with, without revealing it.
  */
 export function passwordFingerprint(
-  password = env.DOSSIER_PASSWORD,
+  password = env.JOBASSIST_PASSWORD,
   key = deriveKey("password-fingerprint"),
 ): string {
   return createHmac("sha256", key).update(password, "utf8").digest("base64url").slice(0, 16);
@@ -96,8 +96,8 @@ export async function decodeSession(
   }
 }
 
-/** Whether `candidate` is the password that DOSSIER_PASSWORD is a hash of. */
-export function passwordMatches(candidate: string, hash = env.DOSSIER_PASSWORD): Promise<boolean> {
+/** Whether `candidate` is the password that JOBASSIST_PASSWORD is a hash of. */
+export function passwordMatches(candidate: string, hash = env.JOBASSIST_PASSWORD): Promise<boolean> {
   return verifyPassword(candidate, hash);
 }
 

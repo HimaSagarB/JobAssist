@@ -17,15 +17,15 @@ import { loadSettings } from "@/lib/settings-data";
 
 import { defineJob } from "./runner";
 
-/** Where finished zips wait to be downloaded, in DOSSIER_DATA_DIR. */
-export const downloadsDir = () => path.join(env.DOSSIER_DATA_DIR, "downloads");
+/** Where finished zips wait to be downloaded, in JOBASSIST_DATA_DIR. */
+export const downloadsDir = () => path.join(env.JOBASSIST_DATA_DIR, "downloads");
 
 /** Zips nobody downloaded are removed after this long. */
 const KEEP_MS = 60 * 60 * 1000;
 
 const pad = (value: number) => String(value).padStart(2, "0");
-/** "dossier-pdfs-2026-09-28.zip" */
-export const zipFileName = (now: Date) => `dossier-pdfs-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.zip`;
+/** "jobassist-pdfs-2026-09-28.zip" */
+export const zipFileName = (now: Date) => `jobassist-pdfs-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.zip`;
 
 /** A company as a folder name: no characters a file system refuses. */
 function folderName(company: string): string {
@@ -70,7 +70,7 @@ export async function countTailoredDocuments(): Promise<number> {
 /**
  * "Download all PDFs" (E10-5, SET-10): renders every application's resume
  * and cover letter, named with the file-name pattern, into one folder per
- * company, and zips them into DOSSIER_DATA_DIR/downloads. The PDF service's
+ * company, and zips them into JOBASSIST_DATA_DIR/downloads. The PDF service's
  * cap keeps it to two renders at a time.
  */
 export const zipPdfsJob = defineJob({

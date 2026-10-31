@@ -1,6 +1,12 @@
 name: CI
 
 on:
+  workflow_dispatch:
+    inputs:
+      publish_image:
+        description: Publish the verified JobAssist container image
+        type: boolean
+        default: false
   pull_request:
   push:
     branches: [main]
@@ -57,22 +63,22 @@ jobs:
     runs-on: ubuntu-latest
     services:
       # For the database tests (*.db.test.ts), which create and migrate their own
-      # "dossier_test" database on this server.
+      # "jobassist_test" database on this server.
       postgres:
         image: postgres:18-alpine
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: dossier
+          POSTGRES_DB: jobassist
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U postgres -d dossier"
+          --health-cmd "pg_isready -U postgres -d jobassist"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/dossier
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/jobassist
       # Same versions as the Dockerfile: Node 24 with the Yarn release pinned in
       # package.json (packageManager), installed through corepack.
       COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
@@ -112,22 +118,22 @@ jobs:
     if: ${{ !cancelled() && needs.checked.outputs.skip != 'true' }}
     runs-on: ubuntu-latest
     services:
-      # The tests create and migrate their own "dossier_e2e" database here.
+      # The tests create and migrate their own "jobassist_e2e" database here.
       postgres:
         image: postgres:18-alpine
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: dossier
+          POSTGRES_DB: jobassist
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U postgres -d dossier"
+          --health-cmd "pg_isready -U postgres -d jobassist"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/dossier
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/jobassist
       COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
     steps:
       - uses: actions/checkout@v7
@@ -165,13 +171,12 @@ jobs:
             test-results/
           retention-days: 7
 
-  # After both checks pass on main, or when its pull request passed them: the
-  # production image on GHCR, tagged with the commit SHA (and "main"). A
-  # version tag then tags it with the version.
+  # Container publication is an explicit manual action after checks pass.
+  # Ordinary source pushes do not publish packages or deploy the app.
   image:
     name: Production image
     needs: [checked, check, e2e]
-    if: ${{ !cancelled() && !failure() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    if: ${{ !cancelled() && !failure() && github.event_name == 'workflow_dispatch' && inputs.publish_image && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read

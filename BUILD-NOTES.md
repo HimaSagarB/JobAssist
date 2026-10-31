@@ -21,8 +21,8 @@ The Docker dependency for local startup is removed: a persistent embedded Postgr
 
 - Production Webpack build and TypeScript: passed. Build emits an unpdf import.meta warning; real PDF parsing passed browser tests.
 - ESLint: passed.
-- 35 focused unit tests: passed.
-- 17 browser tests: passed, covering sign-in, job discovery/scoring, agent drafts/dismissal, encrypted account storage/switching, tailored documents, PDF export, resume import (including PDF and Markdown), confirmed Gmail submission and reply.
+- Current audit: 1,272 unit/interface tests passed (29 optional/live checks skipped).
+- Database audit: 422 tests passed. Final complete browser results are recorded in AUDIT.md.
 - Production login and AI connections screen: passed separate smoke check.
 
 Browser tests use isolated test data and fake AI, job-source and Google services. They do not certify live providers or hiring results. No real applications were submitted.

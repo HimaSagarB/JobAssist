@@ -29,7 +29,7 @@ export const PROVIDER_OPTIONS: readonly {
     defaultUrl: "http://localhost:11434",
     urlPlaceholder: "http://localhost:11434",
     urlHint:
-      "Dossier in Docker? There, localhost is Dossier's own container: use http://host.docker.internal:11434 for Ollama on this computer, or http://ollama:11434 for the Compose service.",
+      "JobAssist in Docker? There, localhost is JobAssist's own container: use http://host.docker.internal:11434 for Ollama on this computer, or http://ollama:11434 for the Compose service.",
     defaultModel: "",
     apiKey: null,
   },
@@ -40,11 +40,11 @@ export const PROVIDER_OPTIONS: readonly {
     description: "Models you run in LM Studio, on this computer or your network.",
     tag: "Private · free · your hardware",
     local: true,
-    // Dossier runs in Docker, where localhost is its own container.
+    // JobAssist runs in Docker, where localhost is its own container.
     defaultUrl: "http://host.docker.internal:1234",
     urlPlaceholder: "http://host.docker.internal:1234",
     urlHint:
-      "That's LM Studio on the computer Dossier's Docker runs on; without Docker, use http://localhost:1234. Can't connect? Start the server in LM Studio's Developer tab, and turn on Serve on Local Network there.",
+      "That's LM Studio on the computer JobAssist's Docker runs on; without Docker, use http://localhost:1234. Can't connect? Start the server in LM Studio's Developer tab, and turn on Serve on Local Network there.",
     defaultModel: "",
     apiKey: { label: "API token", hint: "Only needed if you've turned on authentication in LM Studio's server settings." },
   },
@@ -90,7 +90,7 @@ export function providerOption(provider: AiProvider) {
   return PROVIDER_OPTIONS.find((option) => option.value === provider)!;
 }
 
-/** What people see when a saved key can't be decrypted, e.g. after DOSSIER_SECRET changed. */
+/** What people see when a saved key can't be decrypted, e.g. after JOBASSIST_SECRET changed. */
 export const API_KEY_UNREADABLE = "Your saved API key can't be read. Please enter it again.";
 
 /** What Settings may know about the API key: never the key itself. */

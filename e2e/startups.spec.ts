@@ -9,10 +9,12 @@ import { fakeStartupRequests, resetData, sql } from "./support";
 // robots.txt and "no unsolicited applications", the filters, Dismiss with
 // Undo, and Remove for good, which a refresh doesn't undo.
 test.beforeAll(resetData);
+// Scan settled colors rather than an intermediate toast opacity animation.
+test.use({ reducedMotion: "reduce" });
 
 async function expectAccessible(page: Page) {
   const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
-  expect(violations.filter((violation) => violation.impact === "serious" || violation.impact === "critical").map((violation) => violation.id)).toEqual([]);
+  expect(violations.filter((violation) => violation.impact === "serious" || violation.impact === "critical").map((violation) => ({ id: violation.id, nodes: violation.nodes.map(node => ({ target: node.target, summary: node.failureSummary })) }))).toEqual([]);
 }
 
 test("finds hiring startups with the addresses they publish, and leaves alone what it should", async ({ page }) => {
@@ -44,10 +46,10 @@ test("finds hiring startups with the addresses they publish, and leaves alone wh
   await expect(quiet.getByRole("note")).toContainText("We do not accept unsolicited applications.");
   await expect(quiet.getByRole("link", { name: "Write to them" })).toHaveCount(0);
 
-  // Tulipworks' robots.txt keeps Dossier out, and every request says what it is.
+  // Tulipworks' robots.txt keeps JobAssist out, and every request says what it is.
   const requests = await fakeStartupRequests();
   expect(requests.filter((request) => request.url.includes("tulipworks")).map((request) => request.url)).toEqual(["https://tulipworks.example/robots.txt"]);
-  expect(requests.every((request) => /Dossier\/[\w.-]+; \+https:\/\/github\.com\/AienTech\/dossier\/blob\/main\/PRIVACY\.md#startups/.test(request.userAgent))).toBe(true);
+  expect(requests.every((request) => /JobAssist\/[\w.-]+; \+https:\/\/github\.com\/HimaSagarB\/JobAssist\/blob\/main\/PRIVACY\.md#startups/.test(request.userAgent))).toBe(true);
   await expect(page.getByRole("article", { name: "Tulipworks" }).getByRole("list", { name: "Addresses they publish" })).toHaveCount(0);
 
   await expectAccessible(page);
