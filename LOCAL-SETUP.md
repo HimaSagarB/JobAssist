@@ -2,6 +2,26 @@
 
 Open http://localhost:3000. Your generated login password is in `data/LOCAL-LOGIN.txt`.
 
+## One-command daily routine
+
+After the initial install/build, run this from any terminal folder:
+
+```sh
+npm --prefix ~/Desktop/Projects/JobAssist run daily
+```
+
+It starts the local database and production app if needed, reuses them if already running, and opens `http://localhost:3000/daily` on macOS. Sign in normally if asked. After authentication the daily page checks your setup, starts at most one search per local calendar day, and opens the agent review queue. A run already in progress is reused.
+
+Before your first search, import/review your resume, save and activate an AI connection, choose a job source, and set keywords/country in Settings → Job agent. Turn on **Prepare drafts** and set a draft limit there if you want tailored documents generated automatically. For this manual daily workflow the unattended daily schedule can stay off.
+
+Keep the terminal and laptop awake until search and drafting finish, then review the results. Ctrl+C stops only services the command itself started; services reused from another terminal stay under that terminal’s control. Your data remains on disk.
+
+Opening the command twice does not spend another search on the same day. A failed scan that already began counts as today's attempt; use **Run now** in the agent after the normal cooldown to retry. Searches still use the configured source, first results page, filters and scoring/draft caps. This is not a search of every job website.
+
+Application emails require a separate confirmation and connected Gmail. Employer website forms remain manual. The command does not automatically submit applications.
+
+After pulling code changes, stop the app and rebuild it with `npm run local:prepare` and `npm run build -- --webpack` before using the command again. An older app occupying port 3000 is reported rather than stopped automatically. `npm run daily -- --no-open` starts/checks the services without opening a browser or triggering a search.
+
 ## Activate your real workflow
 
 1. Import your resume on Profile and review the extracted facts, skills, projects and dates.

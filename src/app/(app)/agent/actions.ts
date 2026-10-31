@@ -1,5 +1,6 @@
 "use server";
 
+import { serializeAgentStart } from "@/lib/agent/start-lock";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -56,7 +57,7 @@ export const saveAgentSettings = action(
  * one and within the daily limit. A run already queued or running is
  * reused rather than started again.
  */
-export const runAgentNow = action(z.object({}), async () => {
+export const runAgentNow = action(z.object({}), async () => serializeAgentStart(async () => {
   const settings = await loadSettings();
   if (!settings.agentEnabled) throw new ActionError("Turn the job agent on in Settings → Job agent first.");
   const setup = await agentSetupProblem(settings.agentQuery);
@@ -68,7 +69,7 @@ export const runAgentNow = action(z.object({}), async () => {
   const jobId = await startJob(agentScanJob, { manual: true }, { key: AGENT_JOB_KEY });
   revalidatePath("/agent");
   return { jobId, reused: false };
-});
+}));
 
 const candidateId = z.string().min(1).max(100);
 

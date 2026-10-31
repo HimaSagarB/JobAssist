@@ -15,14 +15,14 @@ describe("GET /api/health (E12-4)", () => {
     const response = await GET();
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toBe("no-store");
-    expect(await response.json()).toEqual({ status: "ok", version: appVersion, db: "ok" });
+    expect(await response.json()).toEqual({ app: "JobAssist", dailyLauncher: true, status: "ok", version: appVersion, db: "ok" });
   });
 
   it("answers 503 when the database fails", async () => {
     vi.mocked(prisma.$queryRaw).mockRejectedValue(new Error("connection refused") as never);
     const response = await GET();
     expect(response.status).toBe(503);
-    expect(await response.json()).toEqual({ status: "unavailable", version: appVersion, db: "unreachable" });
+    expect(await response.json()).toEqual({ app: "JobAssist", dailyLauncher: true, status: "unavailable", version: appVersion, db: "unreachable" });
   });
 
   it("answers 503 when the database doesn't answer in time", async () => {

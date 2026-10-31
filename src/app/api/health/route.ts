@@ -17,7 +17,7 @@ export async function GET() {
     new Promise<"unreachable">((resolve) => setTimeout(() => resolve("unreachable"), DB_TIMEOUT_MS).unref()),
   ]).catch(() => "unreachable" as const);
   return NextResponse.json(
-    { status: db === "ok" ? "ok" : "unavailable", version: appVersion, db },
+    { app: "JobAssist", dailyLauncher: true, status: db === "ok" ? "ok" : "unavailable", version: appVersion, db },
     { status: db === "ok" ? 200 : 503, headers: { "cache-control": "no-store" } },
   );
 }

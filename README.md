@@ -60,6 +60,18 @@ Open **http://localhost:3000**. Initialization writes your generated password to
 
 For later starts, run `npm run local:db` and `npm run local:start` in separate terminals. See [LOCAL-SETUP.md](LOCAL-SETUP.md) for configuration and restart details, and [DEVELOPMENT.md](DEVELOPMENT.md) for engineering notes.
 
+## One-command daily routine
+
+After the initial install/build, run this from any terminal folder:
+
+```sh
+npm --prefix ~/Desktop/Projects/JobAssist run daily
+```
+
+It starts the local database and production app if needed, reuses them if already running, and opens `http://localhost:3000/daily` on macOS. Sign in normally if asked. After authentication the daily page checks your setup, starts at most one search per local calendar day, and opens the agent review queue. A run already in progress is reused.
+
+See [LOCAL-SETUP.md](LOCAL-SETUP.md) for first-time configuration, draft limits and shutdown behavior. Submission still requires confirmation.
+
 ## Verification and limitations
 
 The current audit passed a production build, lint, **1,272 unit/interface tests** and **422 database tests**. **136 Chromium checks** and the actual local production login also passed. See [AUDIT.md](AUDIT.md) for scope. Browser tests use isolated databases and **fake AI, job-source and Google services**; they do not certify live provider output or employer delivery.

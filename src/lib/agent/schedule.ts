@@ -1,4 +1,5 @@
 import "server-only";
+import { serializeAgentStart } from "./start-lock";
 
 import { AgentCandidateStatus } from "@/generated/prisma/enums";
 import { addDays, dayOf } from "@/lib/calendar-view";
@@ -47,11 +48,13 @@ export function nextAgentRun(now: Date, hour: number, timeZone: string, runs: re
 
 /** Starts the day's run when it's due and none is queued or running. */
 export async function startDueRun(now = new Date()): Promise<string | null> {
+  return serializeAgentStart(async () => {
   const settings = await loadSettings();
   if (!settings.agentEnabled) return null;
   if (!scheduledRunDue(now, settings.agentHour, await lastKnownTimeZone(), settings.agentRuns)) return null;
   if ((await findUnfinishedJobs(AGENT_JOB_KEY)).length > 0) return null;
   return startJob(agentScanJob, { manual: false }, { key: AGENT_JOB_KEY });
+  });
 }
 
 /** After a restart, a candidate left DRAFTING has no job to finish it. */
