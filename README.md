@@ -72,6 +72,10 @@ It starts the local database and production app if needed, reuses them if alread
 
 See [LOCAL-SETUP.md](LOCAL-SETUP.md) for first-time configuration, draft limits and shutdown behavior. Submission still requires confirmation.
 
+## Run while your laptop is off
+
+Cloud deployment preparation is documented in [HOSTING.md](HOSTING.md). `railway.json` selects the production container and database health check. Cloud resources, account access and deployment verification are still required; the GitHub repository alone does not host the running app.
+
 ## Verification and limitations
 
 The current audit passed a production build, lint, **1,272 unit/interface tests** and **422 database tests**. **136 Chromium checks** and the actual local production login also passed. See [AUDIT.md](AUDIT.md) for scope. Browser tests use isolated databases and **fake AI, job-source and Google services**; they do not certify live provider output or employer delivery.

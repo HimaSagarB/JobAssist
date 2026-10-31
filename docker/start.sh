@@ -6,7 +6,7 @@ set -eu
 
 cd /app/tools
 if ! node node_modules/prisma/build/index.js migrate deploy; then
-  echo "JobAssist didn't start: applying the database migrations failed (see the error above). See Troubleshooting in the wiki: https://github.com/HimaSagarB/JobAssist/wiki/Troubleshooting" >&2
+  echo "JobAssist didn't start: applying the database migrations failed (see the error above). See deployment notes: https://github.com/HimaSagarB/JobAssist/blob/main/HOSTING.md" >&2
   exit 1
 fi
 if ! node seed.mjs; then
