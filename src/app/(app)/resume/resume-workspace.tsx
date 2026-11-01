@@ -21,6 +21,7 @@ import { PAPER_SIZES, type ThemeData } from "@/lib/themes";
 import { deleteTheme, duplicateTheme, importTheme, saveTheme, setBaseTheme } from "./actions";
 import { draftFrom, ThemeBuilder, type ThemeDraft } from "./theme-builder";
 import { ThemePicker } from "./theme-picker";
+import { TemplateUpload } from "./template-upload";
 
 export type ResumeWorkspaceProps = {
   profile: ProfileData;
@@ -36,7 +37,7 @@ export type ResumeWorkspaceProps = {
   language: string | null;
 };
 
-type Panel = "themes" | "customize";
+type Panel = "themes" | "customize" | "upload";
 
 /**
  * The Base resume screen: the preview on the left and the theme panel on the
@@ -161,6 +162,7 @@ export function ResumeWorkspace({ profile, themes: initialThemes, usage, baseThe
         description="Built straight from your profile. Every new application starts from this one, then gets tailored to the job."
         actions={
           <>
+            <button type="button" className={buttonClassName("secondary")} onClick={() => openPanel("upload")}>Upload your own template</button>
             <Link href="/profile" className={buttonClassName("secondary")}>
               Edit profile
             </Link>
@@ -205,6 +207,7 @@ export function ResumeWorkspace({ profile, themes: initialThemes, usage, baseThe
             <TabsList variant="segmented">
               <TabsTrigger value="themes">Themes</TabsTrigger>
               <TabsTrigger value="customize">Customize</TabsTrigger>
+              <TabsTrigger value="upload">Upload template</TabsTrigger>
             </TabsList>
             <TabsContent value="themes">
               <ThemePicker
@@ -220,6 +223,14 @@ export function ResumeWorkspace({ profile, themes: initialThemes, usage, baseThe
                   importFile: (file) => void importFile(file),
                 }}
               />
+            </TabsContent>
+            <TabsContent value="upload">
+              <TemplateUpload onPreview={(fields) => {
+                setDraft({ ...fields, id: null });
+                movedPanel.current = true;
+                setPanel("customize");
+                toast("Template style ready to review. Your profile is unchanged. Choose Save theme to keep it.");
+              }} />
             </TabsContent>
             <TabsContent value="customize">
               {draft && (

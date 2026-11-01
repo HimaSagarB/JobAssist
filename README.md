@@ -103,3 +103,9 @@ Read [PRIVACY.md](PRIVACY.md) and [SECURITY.md](SECURITY.md). Keep your local da
 ## Ownership and license
 
 JobAssist is maintained by [HimaSagarB](https://github.com/HimaSagarB) and distributed under **AGPL-3.0-only**. Third-party source notices are in [ATTRIBUTION.md](ATTRIBUTION.md); license terms are in [LICENSE](LICENSE).
+
+### Upload a resume template
+
+In **Base resume → Upload your own template**, upload a resume PDF (up to 5 MB). JobAssist reads the first page locally and suggests bundled fonts, accent color, header alignment, density and heading rules. Review the live preview, adjust it in Customize, and choose **Save theme**. New applications use the saved base theme; existing documents retain their chosen theme.
+
+This is an approximate style match, not an exact PDF editor: custom section ordering, icons, exact fonts and pagination are not imported. Template files and their text are not stored, sent to an AI, or added to your profile/knowledge base. To import resume facts separately, use **Profile → Import from a resume**. Word templates must first be exported as PDF.
