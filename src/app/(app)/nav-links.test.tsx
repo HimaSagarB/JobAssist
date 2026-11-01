@@ -27,6 +27,7 @@ describe("NavLinks", () => {
     expect(screen.getAllByRole("link").map((link) => link.textContent)).toEqual([
       "Dashboard",
       "Profile",
+      "Knowledge base",
       "Base resume",
       "Search plan",
       "Find jobs",
@@ -42,6 +43,7 @@ describe("NavLinks", () => {
   it("marks exactly one current section", () => {
     expect(currentItem("/")).toEqual(["Dashboard"]);
     expect(currentItem("/profile")).toEqual(["Profile"]);
+    expect(currentItem("/knowledge")).toEqual(["Knowledge base"]);
     expect(currentItem("/resume")).toEqual(["Base resume"]);
     expect(currentItem("/jobs")).toEqual(["Find jobs"]);
     expect(currentItem("/startups")).toEqual(["Startups"]);

@@ -74,6 +74,7 @@ export function ProfileEditor({ initial, section, order }: { initial: ProfileDat
         actions={
           <>
             <SavedIndicator status={saves.status} savedAt={saves.savedAt} />
+            <Link href="/knowledge" className={buttonClassName("secondary")}>Knowledge base</Link>
             <Link href="/profile/import" className={buttonClassName("secondary")}>
               Import from a resume
             </Link>
