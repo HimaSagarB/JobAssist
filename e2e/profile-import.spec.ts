@@ -57,10 +57,11 @@ test("reads a resume, shows what it found and merges it into the profile", async
   expect(violations.filter((violation) => violation.impact === "serious" || violation.impact === "critical")).toEqual([]);
 
   await page.getByRole("button", { name: "Merge into my profile" }).click();
-  await expect(page).toHaveURL("/profile");
+  await expect(page).toHaveURL("/knowledge");
   await expect(page.getByText(/^Added to your profile: 1 role, 0 projects, 0 degrees, 2 skills, 1 language, 0 references\./)).toBeVisible();
-  // What the resume says wins; the demo profile's other roles stay.
-  await expect(page.getByLabel("Full name")).toHaveValue("John Doe");
+  // Saved personal details and the demo profile's other roles are retained.
+  await page.goto("/profile");
+  await expect(page.getByLabel("Full name")).toHaveValue("Jane Doe");
   await page.goto("/profile?section=experience");
   await expect(page.getByRole("button", { name: /^Design Lead.*Acme Payments/, expanded: false })).toBeVisible();
   await expect(page.getByRole("button", { name: /^Senior Product Designer.*Northwind/, expanded: false })).toBeVisible();
@@ -70,7 +71,7 @@ test("replaces the profile after asking", async ({ page }) => {
   await readResume(page);
   await page.getByRole("button", { name: "Replace my profile…" }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Replace my profile" }).click();
-  await expect(page).toHaveURL("/profile");
+  await expect(page).toHaveURL("/knowledge");
   await page.goto("/profile?section=experience");
   await expect(page.locator("button[aria-expanded]")).toHaveCount(1);
   await expect(page.getByRole("button", { name: /^Design Lead.*Acme Payments/, expanded: false })).toBeVisible();

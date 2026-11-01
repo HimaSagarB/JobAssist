@@ -59,23 +59,22 @@ async function existingProfile() {
 }
 
 describe("applyImportedProfile (E4-10)", () => {
-  it("merges: the file wins where it says something, the rest is kept and the new is added", async () => {
+  it("merges additively: saved details are preserved, missing details filled, and new knowledge added", async () => {
     await existingProfile();
     await applyImportedProfile(prisma(), imported, "merge");
 
     const fields = Object.fromEntries((await prisma().profileField.findMany()).map((field) => [field.key, field.value]));
-    expect(fields).toEqual({ name: "John Doe", email: "john@example.com", city: "Utrecht" });
+    expect(fields).toEqual({ name: "John D.", email: "john@example.com", city: "Utrecht" });
     expect((await prisma().skill.findMany({ orderBy: { sort: "asc" } })).map((skill) => skill.name)).toEqual(["Figma", "Prototyping", "User research"]);
     expect(await prisma().language.findMany({ orderBy: { sort: "asc" }, select: { name: true, level: true } })).toEqual([
-      { name: "Dutch", level: LanguageLevel.NATIVE },
+      { name: "Dutch", level: LanguageLevel.C1 },
       { name: "German", level: LanguageLevel.B2 },
     ]);
 
     const roles = await prisma().experience.findMany({ orderBy: { sort: "asc" }, include: { skills: { include: { skill: true } } } });
-    // Matched regardless of case, the same role takes the file's spelling; its
-    // empty bullets and missing dates keep what was there.
+    // Matching ignores case and retains the saved spelling, bullets and dates.
     expect(roles.map((role) => [role.role, role.company])).toEqual([
-      ["Product designer", "fieldnote"],
+      ["Product Designer", "Fieldnote"],
       ["Design Lead", "Acme Payments"],
     ]);
     expect(roles[0]).toMatchObject({ location: "Amsterdam", bullets: "My own bullets", startYear: 2018 });
@@ -85,7 +84,7 @@ describe("applyImportedProfile (E4-10)", () => {
 
     // Projects (PRO-13) match by name, like roles by role and company.
     const projects = await prisma().project.findMany({ orderBy: { sort: "asc" }, include: { skills: { include: { skill: true } } } });
-    expect(projects.map((project) => project.name)).toEqual(["payout simulator", "Design tokens CLI"]);
+    expect(projects.map((project) => project.name)).toEqual(["Payout simulator", "Design tokens CLI"]);
     expect(projects[0]).toMatchObject({ link: "github.com/john/payout-sim", bullets: "My own project bullets", startYear: 2023 });
     expect(projects[0].skills.map((link) => link.skill.name)).toEqual(["User research"]);
     expect(projects[1]).toMatchObject({ bullets: "Built a CLI", current: true });
@@ -108,7 +107,7 @@ describe("applyImportedProfile (E4-10)", () => {
     await prisma().setting.create({ data: { key: "experienceOrder", value: "manual" } });
     await applyImportedProfile(prisma(), imported, "merge");
     const roles = await prisma().experience.findMany({ orderBy: { sort: "asc" } });
-    expect(roles.map((role) => role.company)).toEqual(["Acme Payments", "fieldnote"]);
+    expect(roles.map((role) => role.company)).toEqual(["Acme Payments", "Fieldnote"]);
   });
 
   it("replaces: only what the file holds, in date order", async () => {
@@ -132,4 +131,17 @@ describe("applyImportedProfile (E4-10)", () => {
       "Doe, J. (2025). A new one.",
     ]);
   });
+});
+
+it("accumulates descriptions and skills across repeated resumes without duplicating or erasing projects", async () => {
+  await existingProfile();
+  const resume = { ...imported, projects: [{ ...imported.projects[0], bullets: "Added network tests", skills: ["User research"] }] };
+  await applyImportedProfile(prisma(), resume, "merge");
+  await applyImportedProfile(prisma(), resume, "merge");
+  const project = await prisma().project.findFirstOrThrow({ where: { name: "Payout simulator" } });
+  expect(project.bullets).toBe("My own project bullets\nAdded network tests");
+  expect(project.startYear).toBe(2023);
+  expect(await prisma().project.count()).toBe(1);
+  expect(await prisma().skill.count()).toBe(3);
+  expect(await prisma().projectSkill.count()).toBe(1);
 });

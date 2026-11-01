@@ -207,6 +207,20 @@ describe("tailorResume", () => {
     expect(sent(provider).effort).toBeUndefined();
   });
 
+  it("selects only returned relevant projects, in relevance order, without deleting saved projects", async () => {
+    const saved = { ...profile, projects: Array.from({ length: 5 }, (_, index) => ({ ...profile.projects[0], id: `candidate-${index}`, name: `Project ${index}` })) };
+    const reply = { ...answer, projects: [{ id: "candidate-3", bullets: ["Relevant network testing"] }, { id: "candidate-1", bullets: ["Relevant Python automation"] }, { id: "candidate-4", bullets: ["Less relevant"] }, { id: "invented", bullets: ["Never allowed"] }] };
+    const provider = model(reply);
+    const result = await tailorResume(provider, { profile: saved, extracted, match: null, facts: [], posting }, { ...options, strict: false, maxPages: 1 });
+    expect(result.data.filter(unit => unit.id.startsWith("project:")).map(unit => unit.id)).toEqual(["project:candidate-3", "project:candidate-1"]);
+    expect(saved.projects).toHaveLength(5);
+    for (const project of saved.projects) expect(prompt(provider)).toContain(project.name);
+  });
+  it("does not restore projects the model intentionally omitted", async () => {
+    const result = await tailorResume(model({ ...answer, projects: [] }), { profile, extracted, match: null, facts: [], posting }, options);
+    expect(result.data.filter(unit => unit.id.startsWith("project:"))).toHaveLength(0);
+    expect(profile.projects.length).toBeGreaterThan(0);
+  });
   it("leaves facts out of the prompt when there are none", async () => {
     const provider = model(answer);
     await tailorResume(provider, { profile: { ...profile, facts: [{ id: "f1", text: "  " }] }, extracted, match: null, facts: [], posting }, options);
@@ -217,7 +231,7 @@ describe("tailorResume", () => {
 
   it("returns units, keeping only real roles and the profile's own skills (APP-4)", async () => {
     const { data, promptVersion } = await tailorResume(model(answer), { profile, extracted, match: null, facts: [], posting }, options);
-    expect(promptVersion).toBe("tailor-resume@6");
+    expect(promptVersion).toBe("tailor-resume@7");
     expect(data.map((unit) => unit.id)).toEqual([
       "summary",
       "experience:e1",

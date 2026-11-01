@@ -57,7 +57,7 @@ describe("tailoringSummary (E7-6)", () => {
       ],
       letter: [],
     });
-    expect(untouched.list).toEqual(["Left out references, since the posting doesn't ask for them"]);
+    expect(untouched.list).toEqual(["Selected 0 of 1 saved projects for this job; the others remain in your knowledge base", "Left out references, since the posting doesn't ask for them"]);
   });
 
   it("mentions skills left out, the note, and details to check", () => {

@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
+import { accumulateKnowledgeFields } from "@/lib/knowledge-merge";
 import { citationText } from "@/lib/citation";
 import { BASICS_FIELDS, sameName } from "@/lib/profile";
 import type { ImportedProfile, ImportMode } from "@/lib/profile-import";
@@ -10,13 +11,9 @@ import { saveSettings } from "@/lib/settings-data";
 type Tx = Prisma.TransactionClient;
 
 /**
- * Applies an imported profile in one transaction (E4-10). Replace clears the
- * profile first. Merge lets the file win (decided 29 September 2026): its
- * basics overwrite the profile's, and an entry it shares with the profile
- * (the same role and company, project name, degree and school, citation, or
- * reference name) takes
- * what the file says; what the file leaves out is kept. Everything else is
- * added, first in a section ordered by hand, else by date.
+ * Applies an imported profile atomically. Merge is additive: existing scalar
+ * details win conflicts, missing details are filled, and descriptions/notes
+ * accumulate without duplicate lines. Replace is an explicitly destructive mode.
  */
 export async function applyImportedProfile(db: PrismaClient, profile: ImportedProfile, mode: ImportMode): Promise<void> {
   await db.$transaction(
@@ -37,7 +34,8 @@ export async function applyImportedProfile(db: PrismaClient, profile: ImportedPr
       );
 
       for (const [key, value] of Object.entries(profile.basics)) {
-        await tx.profileField.upsert({ where: { key }, create: { key, value }, update: { value } });
+        const existing = await tx.profileField.findUnique({ where: { key } });
+        if (!existing?.value.trim()) await tx.profileField.upsert({ where: { key }, create: { key, value }, update: { value } });
       }
 
       const skillIds = await applySkills(tx, profile);
@@ -50,7 +48,7 @@ export async function applyImportedProfile(db: PrismaClient, profile: ImportedPr
         const linked = skills.flatMap((name) => skillIds.get(name.toLowerCase()) ?? []);
         const match = roles.find((role) => sameName(role.role, entry.role) && sameName(role.company, entry.company));
         if (match) {
-          await tx.experience.update({ where: { id: match.id }, data: filled(fields) });
+          await tx.experience.update({ where: { id: match.id }, data: accumulateKnowledgeFields(match, fields) });
           const known = new Set(match.skills.map((link) => link.skillId));
           await tx.experienceSkill.createMany({ data: linked.filter((id) => !known.has(id)).map((skillId) => ({ experienceId: match.id, skillId })) });
         } else {
@@ -67,7 +65,7 @@ export async function applyImportedProfile(db: PrismaClient, profile: ImportedPr
         const linked = skills.flatMap((name) => skillIds.get(name.toLowerCase()) ?? []);
         const match = known.find((project) => sameName(project.name, entry.name));
         if (match) {
-          await tx.project.update({ where: { id: match.id }, data: filled(fields) });
+          await tx.project.update({ where: { id: match.id }, data: accumulateKnowledgeFields(match, fields) });
           const links = new Set(match.skills.map((link) => link.skillId));
           await tx.projectSkill.createMany({ data: linked.filter((id) => !links.has(id)).map((skillId) => ({ projectId: match.id, skillId })) });
         } else {
@@ -81,7 +79,7 @@ export async function applyImportedProfile(db: PrismaClient, profile: ImportedPr
       const degrees = await tx.education.findMany();
       for (const fields of profile.education.map(withoutFlags)) {
         const match = degrees.find((degree) => sameName(degree.degree, fields.degree) && sameName(degree.school, fields.school));
-        if (match) await tx.education.update({ where: { id: match.id }, data: filled(fields) });
+        if (match) await tx.education.update({ where: { id: match.id }, data: accumulateKnowledgeFields(match, fields) });
         else await tx.education.create({ data: { ...fields, sort: nextEducationSort() } });
       }
 
@@ -91,7 +89,7 @@ export async function applyImportedProfile(db: PrismaClient, profile: ImportedPr
       let publicationSort = ((await tx.publication.aggregate({ _max: { sort: true } }))._max.sort ?? -1) + 1;
       for (const fields of profile.publications.map(withoutFlags)) {
         const match = publications.find((publication) => sameName(citationText(publication.citation), citationText(fields.citation)));
-        if (match) await tx.publication.update({ where: { id: match.id }, data: filled({ link: fields.link }) });
+        if (match) await tx.publication.update({ where: { id: match.id }, data: accumulateKnowledgeFields(match, { link: fields.link }) });
         else await tx.publication.create({ data: { ...fields, sort: publicationSort++ } });
       }
 
@@ -99,7 +97,7 @@ export async function applyImportedProfile(db: PrismaClient, profile: ImportedPr
       let referenceSort = ((await tx.reference.aggregate({ _max: { sort: true } }))._max.sort ?? -1) + 1;
       for (const fields of profile.references.map(withoutFlags)) {
         const match = references.find((reference) => sameName(reference.name, fields.name));
-        if (match) await tx.reference.update({ where: { id: match.id }, data: filled(fields) });
+        if (match) await tx.reference.update({ where: { id: match.id }, data: accumulateKnowledgeFields(match, fields) });
         else await tx.reference.create({ data: { ...fields, sort: referenceSort++ } });
       }
     },
@@ -118,13 +116,13 @@ async function applySkills(tx: Tx, profile: ImportedProfile): Promise<Map<string
   return ids;
 }
 
-/** Adds languages; the file's level wins, unless it didn't give one. */
+/** Adds languages without overwriting already saved proficiency. */
 async function applyLanguages(tx: Tx, profile: ImportedProfile): Promise<void> {
   let sort = ((await tx.language.aggregate({ _max: { sort: true } }))._max.sort ?? -1) + 1;
-  for (const { name, level, levelGiven } of profile.languages) {
+  for (const { name, level } of profile.languages) {
     const existing = await tx.language.findUnique({ where: { name } });
     if (!existing) await tx.language.create({ data: { name, level, sort: sort++ } });
-    else if (levelGiven) await tx.language.update({ where: { id: existing.id }, data: { level } });
+    // Saved proficiency is kept; edit conflicts explicitly in the knowledge base.
   }
 }
 
@@ -147,13 +145,4 @@ function withoutFlags<T extends { unverified: string[] }>(entry: T): Omit<T, "un
   const copy: Partial<T> = { ...entry };
   delete copy.unverified;
   return copy as Omit<T, "unverified">;
-}
-
-/** The fields the file says something about: empty text and missing dates keep what's there. */
-function filled<T extends Record<string, unknown>>(fields: T): Partial<T> {
-  const dates = ["startYear", "startMonth", "endYear", "endMonth", "current"];
-  const hasDates = fields.startYear !== null && fields.startYear !== undefined;
-  return Object.fromEntries(
-    Object.entries(fields).filter(([key, value]) => (dates.includes(key) ? hasDates : typeof value === "string" ? value.trim() !== "" : true)),
-  ) as Partial<T>;
 }

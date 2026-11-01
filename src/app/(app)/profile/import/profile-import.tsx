@@ -110,14 +110,14 @@ export function ProfileImport({
     setApplying(true);
     const result = toastResult(await applyProfileImport({ jobId, mode }));
     setApplying(false);
-    if (result.ok) router.push("/profile");
+    if (result.ok) router.push("/knowledge");
   }
 
   return (
     <>
       <PageHeader
         title="Import from a resume"
-        description={`Start your profile from a resume you already have. Nothing goes into your profile until you've seen what was found. The file's text is deleted once you've chosen, or after ${keptFor} if you don't.`}
+        description={`Grow your knowledge base from another resume. Supported formats are text-based PDF, Word (.docx), Markdown and plain text. Nothing goes into your profile until you've seen what was found. The file's text is deleted once you've chosen, or after ${keptFor} if you don't.`}
         actions={
           <Link href="/profile" className={buttonClassName("secondary")}>
             Back to your profile
@@ -176,8 +176,7 @@ export function ProfileImport({
             <Preview profile={job.result.profile} />
             <Card className="flex flex-col gap-4">
               <p className="text-sm text-muted">
-                <strong className="font-medium text-ink">Merge</strong> adds all this to your profile; where your profile already has the same
-                detail, role, degree or reference, what the resume says wins. <strong className="font-medium text-ink">Replace</strong> clears your
+                <strong className="font-medium text-ink">Merge</strong> adds new skills, projects and other knowledge without removing earlier information. Matching descriptions and notes are combined without duplicate lines. Existing personal details, dates and proficiency levels are kept when they conflict; review and edit them in the knowledge base. <strong className="font-medium text-ink">Replace</strong> clears your
                 profile first.
               </p>
               <div className="flex flex-wrap items-center gap-3">
@@ -196,7 +195,7 @@ export function ProfileImport({
               open={confirmReplace}
               onOpenChange={setConfirmReplace}
               title="Replace your profile?"
-              description="Your basics, skills, languages, roles, projects, education, publications and references are removed first; then your profile holds exactly what was read from the resume. Your applications and their documents stay as they are."
+              description="Your basics, skills, languages, roles, projects, education, publications and references are removed first; then your profile holds exactly what was read from the resume. Stored application text is not rewritten; removing profile records can change how existing documents render."
               confirmLabel="Replace my profile"
               onConfirm={() => void apply("replace")}
             />

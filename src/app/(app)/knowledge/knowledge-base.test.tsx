@@ -6,6 +6,7 @@ import { toast } from "@/components/toast";
 import { removeSkill } from "../profile/actions";
 import { KnowledgeBase } from "./knowledge-base";
 
+vi.mock("./actions", () => ({ addKnowledgeProject: vi.fn(), addKnowledgeSkills: vi.fn(), addKnowledgeInformation: vi.fn() }));
 vi.mock("../profile/actions", () => ({ removeSkill: vi.fn(), removeLanguage: vi.fn(), removeExperience: vi.fn(), removeProject: vi.fn(), removeEducation: vi.fn(), removePublication: vi.fn(), removeReference: vi.fn() }));
 vi.mock("@/lib/fact-actions", () => ({ removeFact: vi.fn() }));
 vi.mock("@/components/toast", () => ({ toast: vi.fn() }));

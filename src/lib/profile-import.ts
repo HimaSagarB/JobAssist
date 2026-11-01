@@ -38,7 +38,7 @@ export const importedProfileSchema = z.object({
 });
 export type ImportedProfile = z.infer<typeof importedProfileSchema>;
 
-/** Merge into the profile (what the file says wins) or replace it (decided 29 September 2026). */
+/** Accumulate into the saved profile without discarding prior knowledge, or explicitly replace it. */
 export type ImportMode = "merge" | "replace";
 
 /** The steps of reading a resume, as the progress shows them. */

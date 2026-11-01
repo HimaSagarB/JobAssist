@@ -13,10 +13,13 @@ import { KNOWLEDGE_GROUPS, knowledgeEntries, searchKnowledge, withoutKnowledgeEn
 import type { ProfileData } from "@/lib/profile";
 import { removeEducation, removeExperience, removeLanguage, removeProject, removePublication, removeReference, removeSkill } from "../profile/actions";
 
+import { AddKnowledge, type AddKnowledgeMode } from "./add-knowledge";
+
 const removeActions = { skills: removeSkill, languages: removeLanguage, experience: removeExperience, projects: removeProject, education: removeEducation, publications: removePublication, references: removeReference, facts: removeFact };
 
 export function KnowledgeBase({ initial }: { initial: ProfileData }) {
   const [profile, setProfile] = useState(initial);
+  const [adding, setAdding] = useState<AddKnowledgeMode | null>(null);
   const [query, setQuery] = useState("");
   const [group, setGroup] = useState<KnowledgeGroup | "all">("all");
   const [removing, setRemoving] = useState<KnowledgeEntry | null>(null);
@@ -49,6 +52,12 @@ export function KnowledgeBase({ initial }: { initial: ProfileData }) {
     </>} />
     <div className="space-y-6 px-5 py-6 sm:px-10">
       <p className="rounded-card border border-line-card bg-paper p-4 text-sm text-muted">This is your saved profile knowledge. Resume imports appear here after you review and save them. Uploaded template PDFs only supply formatting and do not add knowledge. Application-specific notes and facts stay with their applications.</p>
+      <div className="flex flex-wrap gap-3" aria-label="Add to knowledge base">
+        <Button onClick={() => setAdding("project")}>Add a project</Button>
+        <Button variant="secondary" onClick={() => setAdding("information")}>Add new information</Button>
+        <Button variant="secondary" onClick={() => setAdding("skills")}>Add skills</Button>
+      </div>
+      {adding && <AddKnowledge key={adding} mode={adding} onCancel={() => setAdding(null)} onSaved={next => { setProfile(next); setAdding(null); setQuery(""); setGroup("all"); }} />}
       <div className="grid gap-4 sm:grid-cols-[1fr_240px]">
         <Input ref={searchInput} label="Search your knowledge" placeholder="Find a skill, project, employer or detail…" value={query} onChange={event => setQuery(event.target.value)} />
         <Select label="Category" value={group} onChange={event => setGroup(event.target.value as KnowledgeGroup | "all")}>

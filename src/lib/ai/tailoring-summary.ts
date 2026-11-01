@@ -66,6 +66,9 @@ export function tailoringSummary({
     );
   }
 
+  const selectedProjectCount = resume.filter(entry => entry.id.startsWith("project:")).length;
+  if (profile.projects.length > selectedProjectCount) list.push(`Selected ${selectedProjectCount} of ${profile.projects.length} saved projects for this job; the others remain in your knowledge base`);
+
   const projects = profile.projects.filter((entry) => {
     const tailored = unit(`project:${entry.id}`);
     return tailored && !same(tailored.text, entry.bullets.split("\n").map((line) => line.trim()).filter(Boolean).join("\n"));

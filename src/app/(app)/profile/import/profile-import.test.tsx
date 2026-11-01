@@ -113,7 +113,7 @@ describe("ProfileImport (E4-10)", () => {
 
     await user.click(screen.getByRole("button", { name: "Merge into my profile" }));
     expect(applyProfileImport).toHaveBeenCalledWith({ jobId: "job-1", mode: "merge" });
-    expect(router.push).toHaveBeenCalledWith("/profile");
+    expect(router.push).toHaveBeenCalledWith("/knowledge");
   });
 
   it("deletes the reading when another file is chosen", async () => {
