@@ -1,4 +1,4 @@
-import { Fragment, type CSSProperties, type ReactNode } from "react";
+import { Fragment, isValidElement, type CSSProperties, type ReactNode } from "react";
 
 import { CitationText } from "@/components/citation";
 import { PhotoPosition, PhotoShape, type PaperSize, type ThemeLayout } from "@/generated/prisma/enums";
@@ -48,6 +48,15 @@ export function ResumeDocument({ theme, profile, paper, layout, language, render
   const content = resumeContent(profile, options, labels);
   const { lang, dir } = documentLanguage(language, sampleText(content));
   const { shape, position } = resolved.photo;
+  const geometry = resolved.geometry;
+  const wants = (key: string) => geometry?.sectionOrder.some(section => section === key) ?? false;
+  // Presentation groups only: profile records and tailored unit IDs stay unchanged.
+  const certificationEntries = wants("certifications") ? content.education.filter(entry => /certif|specialization|career essentials|coursera|udemy|course|training/i.test(`${entry.degree} ${entry.school}`)) : [];
+  const academicEntries = content.education.filter(entry => !certificationEntries.includes(entry));
+  const leadershipEntries = wants("leadership") ? content.experience.filter(entry => /student leader|volunteer|club|president|organizer|coordinator/i.test(`${entry.role} ${entry.descriptor ?? ""}`)) : [];
+  const leadershipProjects = wants("leadership") ? content.projects.filter(project => /hackathon$/i.test(project.name)) : [];
+  const portfolioEntries = content.projects.filter(project => !leadershipProjects.includes(project));
+  const employmentEntries = content.experience.filter(entry => !leadershipEntries.includes(entry));
   const photo = (size: "header" | "sidebar", className?: string) =>
     content.photo && <ResumePhoto key="photo" src={content.photo} name={content.name} shape={shape} size={size} className={className} />;
 
@@ -65,7 +74,7 @@ export function ResumeDocument({ theme, profile, paper, layout, language, render
       </DocumentSection>
     ),
     content.skills && (
-      <DocumentSection key="skills" title={labels.skills}>
+      <DocumentSection key="skills" title={geometry?.technicalSkillsLabel ? "Technical Skills" : labels.skills}>
         {renderUnit({ id: "skills", children: <p>{content.skills}</p> })}
       </DocumentSection>
     ),
@@ -79,12 +88,12 @@ export function ResumeDocument({ theme, profile, paper, layout, language, render
   const main = [
     content.summary && (
       <DocumentSection key="summary" title={labels.profile}>
-        {renderUnit({ id: "summary", children: <p className={styles.summary}>{content.summary}</p> })}
+        {renderUnit({ id: "summary", children: geometry?.summaryBullet ? <ul className={styles.summaryBullet}><li>{content.summary}</li></ul> : <p className={styles.summary}>{content.summary}</p> })}
       </DocumentSection>
     ),
-    content.experience.length > 0 && (
+    employmentEntries.length > 0 && (
       <DocumentSection key="experience" title={labels.experience}>
-        {content.experience.map((role) => (
+        {employmentEntries.map((role) => (
           <Fragment key={role.id}>
             {renderUnit({
               id: `experience:${role.id}`,
@@ -100,7 +109,7 @@ export function ResumeDocument({ theme, profile, paper, layout, language, render
                       ))}
                     </ul>
                   )}
-                  {role.skills.length > 0 && (
+                  {role.skills.length > 0 && !(geometry && role.bullets.some(bullet => /^(tools|technologies|tech stack)[:\s]/i.test(bullet))) && (
                     <p className={styles.entrySkills}>
                       <span className={styles.accent}>{`${labels.skills} · `}</span>
                       {role.skills.join(", ")}
@@ -113,9 +122,9 @@ export function ResumeDocument({ theme, profile, paper, layout, language, render
         ))}
       </DocumentSection>
     ),
-    content.projects.length > 0 && (
+    portfolioEntries.length > 0 && (
       <DocumentSection key="projects" title={labels.projects}>
-        {content.projects.map((project) => (
+        {portfolioEntries.map((project) => (
           <Fragment key={project.id}>
             {renderUnit({
               id: `project:${project.id}`,
@@ -137,7 +146,7 @@ export function ResumeDocument({ theme, profile, paper, layout, language, render
                       ))}
                     </ul>
                   )}
-                  {project.skills.length > 0 && (
+                  {project.skills.length > 0 && !(geometry && project.bullets.some(bullet => /^(tools|technologies|tech stack)[:\s]/i.test(bullet))) && (
                     <p className={styles.entrySkills}>
                       <span className={styles.accent}>{`${labels.skills} · `}</span>
                       {project.skills.join(", ")}
@@ -150,18 +159,44 @@ export function ResumeDocument({ theme, profile, paper, layout, language, render
         ))}
       </DocumentSection>
     ),
-    content.education.length > 0 && (
+    academicEntries.length > 0 && (
       <DocumentSection key="education" title={labels.education}>
-        {content.education.map((entry) => (
+        {academicEntries.map((entry) => (
           <Fragment key={entry.id}>
             {renderUnit({
               id: `education:${entry.id}`,
               className: styles.entry,
-              head: <EntryHead title={entry.degree} at={entry.school} dates={entry.dates} timeline={resolved.timeline} />,
-              children: entry.notes && <p className={styles.muted}>{entry.notes}</p>,
+              head: <EntryHead title={geometry ? entry.school : entry.degree} at={geometry ? undefined : entry.school} dates={entry.dates} timeline={resolved.timeline} />,
+              children: geometry ? (() => {
+                const grade = entry.notes?.match(/(?:CGPA|GPA|Percentage)\s*:\s*[\d./%]+/i)?.[0]?.replace(/\.$/, "");
+                const notes = grade ? entry.notes?.replace(grade, "").replace(/^[.\s]+/, "") : entry.notes;
+                return <><div className={styles.educationDetail}><span>{entry.degree}</span>{grade && <span>{grade}</span>}</div>{notes && <ul className={styles.bullets}><li>{notes}</li></ul>}</>;
+              })() : entry.notes && <p className={styles.muted}>{entry.notes}</p>,
             })}
           </Fragment>
         ))}
+      </DocumentSection>
+    ),
+    certificationEntries.length > 0 && (
+      <DocumentSection key="certifications" title="Certifications">
+        <ul className={styles.compactCertificate}>{certificationEntries.map(entry => <li key={entry.id}>{renderUnit({
+          id: `education:${entry.id}`,
+          children: <p><strong>{entry.degree}</strong>{entry.school && ` – ${entry.school}`}{entry.notes && ` · ${entry.notes}`}{entry.dates && ` (${entry.dates})`}</p>,
+        })}</li>)}</ul>
+      </DocumentSection>
+    ),
+    (leadershipEntries.length > 0 || leadershipProjects.length > 0) && (
+      <DocumentSection key="leadership" title="Leadership & Extracurricular Activities">
+        {leadershipEntries.map(role => <Fragment key={role.id}>{renderUnit({
+          id: `experience:${role.id}`, className: styles.entry,
+          head: <EntryHead title={role.company} at={undefined} dates={role.dates} timeline={resolved.timeline} />,
+          children: <><p className={styles.descriptor}>{role.role}</p>{role.bullets.length > 0 && <ul className={styles.bullets}>{role.bullets.map((bullet, index) => <li key={index}>{bullet}</li>)}</ul>}</>,
+        })}</Fragment>)}
+        {leadershipProjects.map(project => <Fragment key={project.id}>{renderUnit({
+          id: `project:${project.id}`, className: styles.entry,
+          head: <EntryHead title={project.name} at={undefined} dates={project.dates} timeline={resolved.timeline} />,
+          children: project.bullets.length > 0 && <ul className={styles.bullets}>{project.bullets.map((bullet, index) => <li key={index}>{bullet}</li>)}</ul>,
+        })}</Fragment>)}
       </DocumentSection>
     ),
     content.publications.length > 0 && (
@@ -213,18 +248,26 @@ export function ResumeDocument({ theme, profile, paper, layout, language, render
   // Reading order matches what you see: the sidebar comes first in sidebar
   // layouts (and keeps its column even when empty) unless it's at the end of
   // the line, and its sections follow the main ones in a single column.
-  const columns = !resolved.split
-    ? [main, sidebar].filter((sections) => sections.length > 0)
-    : resolved.sidebarEnd
-      ? [main, sidebar]
-      : [sidebar, main];
+  const rank = (section: ReactNode) => {
+    const key = isValidElement(section) ? String(section.key) : "";
+    const index = geometry?.sectionOrder.indexOf(key as never) ?? -1;
+    return index < 0 ? 100 : index;
+  };
+  const ordered = [...main, ...sidebar].sort((a, b) => rank(a) - rank(b));
+  const measuredSidebar = ordered.filter(section => isValidElement(section) && geometry?.sidebarSections.includes(String(section.key) as never));
+  const measuredMain = ordered.filter(section => !measuredSidebar.includes(section));
+  const columns = geometry
+    ? resolved.split ? [measuredSidebar, measuredMain] : [ordered]
+    : !resolved.split
+      ? [main, sidebar].filter((sections) => sections.length > 0)
+      : resolved.sidebarEnd ? [main, sidebar] : [sidebar, main];
   // A tinted sidebar is drawn as a panel, unless there's nothing in it.
   const panel = resolved.tintedSidebar && sidebar.length > 0 ? sidebar : null;
 
   const title = (
     <>
       <h1 className={styles.name}>{content.name}</h1>
-      {content.headline && <p className={styles.headline}>{content.headline}</p>}
+      {content.headline && (!geometry || geometry.showHeadline) && <p className={styles.headline}>{content.headline}</p>}
       {!resolved.split && content.contacts.length > 0 && <ContactLine items={content.contacts} />}
     </>
   );

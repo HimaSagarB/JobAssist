@@ -2,14 +2,15 @@ import "server-only";
 
 import { themeFieldsSchema, type ThemeFields } from "./theme-file";
 import { THEME_STYLE_DEFAULTS } from "./themes";
+import { sectionFromHeading, type TemplateSection } from "./template-geometry";
 
 export const TEMPLATE_MAX_BYTES = 5 * 1024 * 1024;
 export const TEMPLATE_LIMIT_MESSAGE = "Choose a PDF template smaller than 5 MB.";
-export const TEMPLATE_NOTICE = "This recreates supported styling from the first PDF page. Fonts are matched to bundled alternatives; section order, exact spacing, icons and custom sections are not copied. Review the preview before saving.";
+export const TEMPLATE_NOTICE = "Measured first-page layout: type sizes, margins, spacing, header alignment and recognized section order. Fonts are matched locally. Content changes may alter line breaks and page count; scanned/image-only PDFs are not supported.";
 
 export class TemplateReadError extends Error {}
 
-type TextMark = { x: number; y: number; width: number; size: number; weight: number; font: string };
+type TextMark = { x: number; y: number; width: number; size: number; weight: number; font: string; text?: string };
 type StyleEvidence = { width: number; height: number; marks: TextMark[]; colors: string[]; rules: boolean };
 
 /** Converts only visual measurements into editable settings; no resume text leaves this module. */
@@ -31,10 +32,58 @@ export function templateStyle({ width, height, marks, colors, rules }: StyleEvid
   }
   const accent = [...accents].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "#1d1c1a";
   const left = Math.min(...marks.map(mark => mark.x));
+  const scale = 640 / width;
+  const bounded = (value: number, min: number, max: number) => Math.min(max, Math.max(min, Math.round(value * 100) / 100));
+  const median = (values: number[], fallback: number) => values.length ? [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)] : fallback;
+  const sizes = new Map<number, number>();
+  for (const mark of marks) { const size = Math.round(mark.size * 5) / 5; sizes.set(size, (sizes.get(size) ?? 0) + mark.weight); }
+  const bodySize = [...sizes].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 10;
+  const rows: { y: number; x: number; end: number; size: number; text: string }[] = [];
+  for (const mark of [...marks].sort((a, b) => b.y - a.y || a.x - b.x)) {
+    const previous = rows[rows.length - 1];
+    if (previous && Math.abs(previous.y - mark.y) < 2 && mark.x - previous.end < width * 0.12) {
+      previous.text += ` ${mark.text ?? ""}`; previous.end = Math.max(previous.end, mark.x + mark.width);
+    } else rows.push({ y: mark.y, x: mark.x, end: mark.x + mark.width, size: mark.size, text: mark.text ?? "" });
+  }
+  const headings = rows.flatMap((row, index) => {
+    const section = sectionFromHeading(row.text);
+    return section ? [{ ...row, section, index }] : [];
+  });
+  const order = [...new Set(headings.map(row => row.section))];
+  const headingSize = median(headings.map(row => row.size), bodySize * 1.2);
+  const advances = rows.slice(1).map((row, index) => rows[index].y - row.y).filter(gap => gap > bodySize * 1.05 && gap < bodySize * 1.6);
+  const leading = [...advances].sort((a, b) => a - b)[Math.floor(advances.length * 0.25)] ?? bodySize * 1.2;
+  const sectionGaps = headings.flatMap(row => row.index ? [rows[row.index - 1].y - row.y - (headingSize + bodySize) * leading / bodySize / 2] : []);
+  const headingGaps = headings.flatMap(row => rows[row.index + 1] ? [row.y - rows[row.index + 1].y - (headingSize + bodySize) * leading / bodySize / 2 - 1] : []);
+  const sidebarSections: TemplateSection[] = [];
+  const leftHeadings = headings.filter(row => row.x < width * 0.25);
+  const rightHeadings = headings.filter(row => row.x > width * 0.3);
+  const columns = leftHeadings.length >= 2 && rightHeadings.length >= 2;
+  if (columns) sidebarSections.push(...leftHeadings.map(row => row.section));
+  const firstHeading = headings[0];
+  const headerRows = rows.filter(row => top && row.y < top.y - top.size * 0.5 && (!firstHeading || row.y > firstHeading.y));
+  const headerHasHeadline = headerRows.some(row => row.text && !/@|https?:|linkedin|github|\+?\d[\d ()-]{6,}/i.test(row.text));
+  const geometry = {
+    version: 1, paper: Math.abs(width / height - 612 / 792) < 0.025 ? "LETTER" : "A4",
+    paddingX: bounded(left * scale, 12, 100),
+    paddingY: bounded((height - Math.max(...marks.map(mark => mark.y + mark.size * 0.8))) * scale, 12, 100),
+    fontSize: bounded(bodySize * scale, 8, 18), nameSize: bounded((top?.size ?? 25) * scale, 16, 48),
+    headingSize: bounded(headingSize * scale, 9, 24),
+    lineHeight: bounded(leading / bodySize, 1, 1.8),
+    sectionGap: bounded(median(sectionGaps, 5) * scale, 2, 30), itemGap: bounded(bodySize * 0.3 * scale, 1, 16),
+    headingGap: bounded(median(headingGaps, 4) * scale, 1, 12), headerGap: bounded(bodySize * 0.2 * scale, 0, 20),
+    bulletIndent: bounded(bodySize * 2.4 * scale, 8, 32), headingWeight: 400,
+    computerModern: /cmr|cmbx|cmti|cmcsc|lmr|latin.?modern/i.test(primaryFont),
+    smallCapsName: /cmcsc|smallcaps/i.test(top?.font ?? ""), showHeadline: headerHasHeadline,
+    sectionOrder: order, sidebarSections,
+    technicalSkillsLabel: headings.some(row => row.section === "skills" && /^technical/i.test(row.text)),
+    summaryBullet: (() => { const row = headings.find(row => row.section === "summary"); return row ? /^[•·*-]/.test(rows[row.index + 1]?.text.trim() ?? "") : false; })(),
+  };
   return themeFieldsSchema.parse({
     ...THEME_STYLE_DEFAULTS,
-    name: "My uploaded template", headFont: font, bodyFont: font, accent,
-    layout: "SINGLE", align: centered ? "CENTER" : "LEFT",
+    name: "Matched resume template", headFont: font, bodyFont: font, accent,
+    templateGeometry: geometry,
+    layout: columns ? "SPLIT" : "SINGLE", align: centered ? "CENTER" : "LEFT",
     headingStyle: rules ? "RULE" : "PLAIN",
     density: left / width < 0.065 ? "COMPACT" : "REGULAR",
   });
@@ -67,7 +116,7 @@ export async function readResumeTemplate(bytes: Uint8Array): Promise<ThemeFields
       } catch { /* Some PDFs don't expose font names; use their font family. */ }
       if (/awesome|symbol|dingbat/i.test(font)) continue;
       marks.push({ x: item.transform[4], y: item.transform[5], width: item.width,
-        size: Math.abs(item.height), weight: item.str.length, font });
+        size: Math.abs(item.height), weight: item.str.length, font, text: item.str });
     }
     const colors = operators.fnArray.flatMap((op, index) =>
       op === OPS.setFillRGBColor || op === OPS.setStrokeRGBColor

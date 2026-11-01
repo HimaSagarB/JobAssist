@@ -515,3 +515,20 @@
     padding: 0;
   }
 }
+
+/* Uploaded PDFs use measured geometry rather than a broad density preset. */
+.measuredTemplate { --doc-ink: #000; --doc-text: #000; --doc-muted: #252525; }
+.measuredTemplate .name { font-variant: var(--name-variant); letter-spacing: 0; }
+.measuredTemplate .header { gap: calc(var(--u) * var(--header-gap)); }
+.measuredTemplate .section { gap: calc(var(--u) * var(--section-inner-gap)); }
+.measuredTemplate .contactLine { font-size: 1em; margin-top: 0; }
+.measuredTemplate .bullets { padding-inline-start: calc(var(--u) * var(--bullet-indent)); margin-top: 0; }
+.measuredTemplate .dates { font-size: 1em; color: var(--doc-ink); }
+.measuredTemplate .entryHead { font-weight: 600; }
+.measuredTemplate .descriptor { font-size: 1em; margin-top: 0; }
+.measuredTemplate .summaryBullet { padding-inline-start: calc(var(--u) * var(--bullet-indent)); list-style: disc; }
+
+.measuredTemplate .educationDetail { display: flex; justify-content: space-between; gap: calc(var(--u) * 8); font-style: italic; }
+.measuredTemplate .educationDetail > :last-child { white-space: nowrap; }
+.measuredTemplate .compactCertificate { list-style: disc; padding-inline-start: calc(var(--u) * var(--bullet-indent)); }
+.measuredTemplate .compactCertificate li + li { margin-top: calc(var(--u) * var(--item-gap)); }

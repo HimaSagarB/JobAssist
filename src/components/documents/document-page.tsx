@@ -10,8 +10,10 @@ import styles from "./document.module.css";
 
 /** The theme's numbers as the custom properties document.module.css reads. */
 function themeStyle(theme: ResolvedTheme, paper: PaperSize): CSSProperties {
-  const { density, heading, name } = theme;
+  const { density, heading, name, geometry } = theme;
+  paper = geometry?.paper ?? paper;
   return {
+    ...(geometry && { "--section-inner-gap": geometry.headingGap, "--header-gap": geometry.headerGap, "--bullet-indent": geometry.bulletIndent, "--name-variant": geometry.smallCapsName ? "small-caps" : "normal" }),
     "--page-height": PAPER_SIZES[paper].pageHeight,
     "--paper-width": PAPER_SIZES[paper].widthMm,
     "--paper-height": PAPER_SIZES[paper].heightMm,
@@ -41,6 +43,7 @@ function themeStyle(theme: ResolvedTheme, paper: PaperSize): CSSProperties {
 /** The theme's structure as classes on the page: layout, header, dates and section titles. */
 function themeClasses(theme: ResolvedTheme) {
   return cn(
+    theme.geometry && styles.measuredTemplate,
     theme.split && styles.split,
     theme.sidebarEnd && styles.sidebarEnd,
     theme.tintedSidebar && styles.tintedSidebar,

@@ -236,8 +236,20 @@ export const notoSansSc = localFont({
   declarations: [{ prop: "unicode-range", value: "U+3000-303F, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF00-FFEF" }],
 });
 
+/** Computer Modern text for reconstructed LaTeX-style resume templates. */
+export const computerModern = localFont({
+  src: [
+    { path: "./computer-modern/KaTeX_Main-Regular.woff2", weight: "400", style: "normal" },
+    { path: "./computer-modern/KaTeX_Main-Bold.woff2", weight: "600 900", style: "normal" },
+    { path: "./computer-modern/KaTeX_Main-Italic.woff2", weight: "400", style: "italic" },
+    { path: "./computer-modern/KaTeX_Main-BoldItalic.woff2", weight: "600 900", style: "italic" },
+  ],
+  variable: "--typeface-computer-modern", adjustFontFallback: false, preload: false,
+});
+
 /** Class names that define every --typeface-* variable; set on <html>. */
 export const fontVariables = [
+  computerModern,
   geist,
   newsreader,
   plexSans,

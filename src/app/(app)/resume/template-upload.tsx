@@ -29,12 +29,12 @@ export function TemplateUpload({ onPreview }: { onPreview: (theme: ThemeFields) 
 
   return <section className="space-y-4" aria-labelledby="template-upload-title">
     <h2 id="template-upload-title" className="font-serif text-xl">Upload your own template</h2>
-    <p className="text-sm text-muted">Choose a resume PDF as a style reference. JobAssist reads its first page locally and suggests fonts, accent color, header alignment, spacing and heading rules.</p>
+    <p className="text-sm text-muted">Choose a resume PDF as a style reference. JobAssist reads its first page locally and measures margins, type sizes, line spacing, header alignment, columns and recognized section order.</p>
     <p className="rounded-card bg-card p-3 text-sm">Template uploads are separate from your knowledge base. They do not add skills, experience or personal details to your profile. The uploaded file is not saved or sent to an AI; only style settings are saved when you choose Save theme.</p>
     <label className="block space-y-2"><span className="text-sm font-medium">Resume template PDF (up to 5 MB)</span>
       <input type="file" accept=".pdf,application/pdf" disabled={busy} aria-describedby="template-upload-help" onChange={event => { setFile(event.target.files?.[0] ?? null); setError(""); }} className="block w-full text-sm" />
     </label>
-    <p id="template-upload-help" className="text-sm text-muted">This is an approximate style match. Section order, exact fonts, icons, custom sections and page count are not copied. Export Word templates as PDF first. Preview uses your existing profile content.</p>
+    <p id="template-upload-help" className="text-sm text-muted">The editable layout follows measured formatting and recognized headings. Unrecognized custom sections, graphics and icons may differ. Font substitutions and tailored content can change line breaks and page count. Scanned PDFs are not supported. Export Word templates as PDF first. Preview uses your existing profile content.</p>
     <Button disabled={!file || busy} onClick={() => void analyze()}>{busy ? "Reading template…" : "Preview template style"}</Button>
     {busy && <p role="status" className="text-sm text-muted">Reading PDF formatting…</p>}
     {error && <p role="alert" className="text-sm text-warning">{error}</p>}

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { readTemplateGeometry, templateGeometrySchema } from "./template-geometry";
 
 import {
   DateStyle,
@@ -22,14 +23,15 @@ export const THEME_FILE_FORMAT = "jobassist-theme";
 /**
  * Bump when the file's shape changes; imports refuse versions they don't
  * know. Version 2 added the header, sidebar and date styles, 3 the photo's
- * shape and position (#224); older files read with the defaults.
+ * shape and position (#224), 4 measured PDF geometry; older files read with the defaults.
  */
-export const THEME_FILE_VERSION = 3;
+export const THEME_FILE_VERSION = 4;
 
 const font = z.enum(ThemeFont, { error: (issue) => `That theme uses a font JobAssist doesn't have (${String(issue.input)}).` });
 
 /** A theme's name and look, checked the same way wherever it comes from. */
 export const themeFieldsSchema = z.object({
+  templateGeometry: templateGeometrySchema.optional(),
   name: z
     .string()
     .trim()
@@ -72,7 +74,7 @@ export function themeFile(theme: ThemeData) {
   return {
     format: THEME_FILE_FORMAT,
     version: THEME_FILE_VERSION,
-    theme: { name, headFont, bodyFont, accent, layout, align, headingStyle, density, headerStyle, sidebarStyle, dateStyle, photoShape, photoPosition },
+    theme: { name, headFont, bodyFont, accent, layout, align, headingStyle, density, headerStyle, sidebarStyle, dateStyle, photoShape, photoPosition, ...(readTemplateGeometry(theme.templateGeometry) && { templateGeometry: readTemplateGeometry(theme.templateGeometry) }) },
   };
 }
 

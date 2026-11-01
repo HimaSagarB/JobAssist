@@ -13,7 +13,7 @@ describe("style-only template upload route", () => {
     vi.mocked(readResumeTemplate).mockResolvedValue({ name: "My uploaded template" } as never);
     const response = await POST(request("%PDF-template"), undefined);
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ theme: { name: "My uploaded template" }, notice: expect.stringContaining("first PDF page") });
+    expect(await response.json()).toEqual({ theme: { name: "My uploaded template" }, notice: expect.stringContaining("first-page") });
     expect(response.headers.get("cache-control")).toBeNull(); // The shared route wrapper adds private, no-store in production.
   });
   it("rejects declared and actual oversized bodies before parsing", async () => {

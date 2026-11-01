@@ -1,3 +1,4 @@
+import { templateStyle } from "@/lib/resume-template";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { loadSettings } from "@/lib/settings-data";
@@ -144,3 +145,18 @@ describe("managing themes (E5-7)", () => {
   });
 });
 
+
+
+describe("measured layout persistence", () => {
+  it("saves and duplicates geometry without adding any profile facts", async () => {
+    const fields = templateStyle({ width: 612, height: 792, colors: ["#c43119"], rules: true, marks: [{ x: 30, y: 740, width: 200, size: 11, weight: 20, font: "CMR10" }] });
+    const result = await saveTheme({ ...fields, id: null });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.data.templateGeometry).toEqual(fields.templateGeometry);
+    const duplicate = await duplicateTheme({ id: result.data.id });
+    expect(duplicate).toMatchObject({ ok: true, data: { templateGeometry: fields.templateGeometry } });
+    expect(await prisma().profileField.count()).toBe(0);
+    expect(await prisma().fact.count()).toBe(0);
+  });
+});

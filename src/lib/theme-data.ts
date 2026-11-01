@@ -5,6 +5,7 @@ import { BUILT_IN_THEMES, type ThemeData } from "@/lib/themes";
 
 /** The columns a ThemeData needs, for `select`. */
 export const THEME_FIELDS = {
+  templateGeometry: true,
   id: true,
   name: true,
   builtIn: true,

@@ -1,3 +1,4 @@
+import { readTemplateGeometry, templateGeometrySchema } from "./template-geometry";
 import "server-only";
 
 import { z } from "zod";
@@ -147,6 +148,7 @@ const theme = z.object({
   /** Absent before 1.9.0 (#224). */
   photoShape: z.enum(PhotoShape).optional(),
   photoPosition: z.enum(PhotoPosition).optional(),
+  templateGeometry: templateGeometrySchema.nullish().transform(value => value ?? undefined),
   createdAt: date,
   updatedAt: date,
 });
@@ -443,7 +445,7 @@ export async function buildExport(
         references,
         facts,
       },
-      themes,
+      themes: themes.map(theme => ({ ...theme, templateGeometry: readTemplateGeometry(theme.templateGeometry) })),
       settings: settings.filter((setting) => !SECRET_SETTINGS.includes(setting.key) && !INSTALL_SETTINGS.includes(setting.key)),
       ...(apiKey ? { apiKey } : {}),
       ...(Object.keys(jobSourceKeys).length > 0 ? { jobSourceKeys } : {}),

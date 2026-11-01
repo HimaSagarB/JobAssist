@@ -56,7 +56,7 @@ export const duplicateTheme = action(z.object({ id: z.string().min(1) }), async 
   const original = await prisma.theme.findUnique({ where: { id }, select: { ...THEME_FIELDS, id: false, builtIn: false } });
   if (!original) throw new ActionError(THEME_GONE);
   const copy = await prisma.$transaction(async (tx) => {
-    const created = await tx.theme.create({ data: { ...original, name: `${original.name} copy`.slice(0, 60) }, select: THEME_FIELDS });
+    const created = await tx.theme.create({ data: { ...original, templateGeometry: original.templateGeometry ?? undefined, name: `${original.name} copy`.slice(0, 60) }, select: THEME_FIELDS });
     await saveSettings({ baseThemeId: created.id }, tx);
     return created;
   });

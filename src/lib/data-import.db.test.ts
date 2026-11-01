@@ -1,3 +1,4 @@
+import { templateStyle } from "./resume-template";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { decryptApiKey, encryptApiKey } from "@/lib/ai/api-key";
@@ -368,4 +369,14 @@ describe("parseExport (E10-6)", () => {
     const damaged = { ...good, applications: [{ ...good.applications[0], status: "MAYBE" }] };
     expect(parseExport(JSON.stringify(damaged))).toMatchObject({ ok: false, error: expect.stringMatching(/^That export is damaged or incomplete \(applications\.0\.status/) });
   });
+});
+
+
+it("preserves measured resume layout through a complete backup round trip", async () => {
+  const geometry = templateStyle({ width: 612, height: 792, colors: [], rules: true, marks: [{ x: 30, y: 740, width: 200, size: 11, weight: 20, font: "CMR10" }] }).templateGeometry!;
+  await prisma().theme.update({ where: { id: "mine" }, data: { templateGeometry: geometry } });
+  const file = await asFile();
+  expect(file.themes.find(theme => theme.id === "mine")?.templateGeometry).toEqual(geometry);
+  await importExport(prisma(), file);
+  expect((await prisma().theme.findUniqueOrThrow({ where: { id: "mine" } })).templateGeometry).toEqual(geometry);
 });

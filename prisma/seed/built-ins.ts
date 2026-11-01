@@ -9,7 +9,7 @@ import { BUILT_IN_THEMES } from "@/lib/themes";
 export async function seedBuiltIns(db: PrismaClient): Promise<void> {
   await db.$transaction(
     BUILT_IN_THEMES.map(({ id, ...theme }) =>
-      db.theme.upsert({ where: { id }, create: { id, ...theme }, update: theme }),
+      db.theme.upsert({ where: { id }, create: { id, ...theme, templateGeometry: undefined }, update: { ...theme, templateGeometry: undefined } }),
     ),
   );
 }

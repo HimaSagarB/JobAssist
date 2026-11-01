@@ -1,5 +1,6 @@
 "use client";
 
+import { type TemplateGeometry, readTemplateGeometry } from "@/lib/template-geometry";
 import { RadioGroup } from "radix-ui";
 import { useId, useState, type ReactNode } from "react";
 
@@ -26,11 +27,12 @@ import {
 } from "@/lib/themes";
 
 /** A theme being customised: a custom theme's id, or null for a new one. */
-export type ThemeDraft = Omit<ThemeData, "id" | "builtIn"> & { id: string | null };
+export type ThemeDraft = Omit<ThemeData, "id" | "builtIn" | "templateGeometry"> & { id: string | null; templateGeometry?: TemplateGeometry };
 
 /** Where the builder starts: a copy named "My theme" of a built-in, or the custom theme itself. */
 export function draftFrom({ builtIn, id, ...theme }: ThemeData): ThemeDraft {
-  return builtIn ? { ...theme, id: null, name: "My theme" } : { ...theme, id };
+  const fields = { ...theme, templateGeometry: readTemplateGeometry(theme.templateGeometry) };
+  return builtIn ? { ...fields, id: null, name: "My theme" } : { ...fields, id };
 }
 
 const options = <T extends string>(labels: Record<T, { label: string }>) =>
@@ -52,7 +54,16 @@ type ThemeBuilderProps = {
 
 /** The Customize tab (RES-3): every change shows in the preview as you make it. */
 export function ThemeBuilder({ draft, onChange, onSave, onCancel, saving }: ThemeBuilderProps) {
-  const set = <K extends keyof ThemeDraft>(key: K) => (value: ThemeDraft[K]) => onChange({ ...draft, [key]: value });
+  const set = <K extends keyof ThemeDraft>(key: K) => (value: ThemeDraft[K]) => {
+    const geometry = readTemplateGeometry(draft.templateGeometry);
+    const next = { ...draft, [key]: value };
+    if (geometry && (key === "headFont" || key === "bodyFont")) next.templateGeometry = { ...geometry, computerModern: false };
+    if (geometry && key === "density") {
+      const density = DENSITIES[value as keyof typeof DENSITIES];
+      next.templateGeometry = { ...geometry, paddingX: density.paddingX, paddingY: density.paddingY, sectionGap: density.gap, itemGap: density.itemGap, fontSize: density.fontSize, lineHeight: density.lineHeight };
+    }
+    onChange(next);
+  };
   // Minimal's grey and custom colours aren't swatches; keep them on offer while they're the draft's colour.
   const accents = ACCENTS.some((accent) => accent.value === draft.accent)
     ? ACCENTS
@@ -67,6 +78,7 @@ export function ThemeBuilder({ draft, onChange, onSave, onCancel, saving }: Them
         onSave();
       }}
     >
+      {readTemplateGeometry(draft.templateGeometry) && <p className="rounded-card bg-card p-3 text-sm">Measured PDF layout is active: margins, type sizes, spacing and recognized section order. These measurements also apply to tailored resumes and PDF downloads. Font matching and content length can still change line breaks.</p>}
       <Input
         label="Theme name"
         value={draft.name}

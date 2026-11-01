@@ -10,7 +10,7 @@ describe("theme files (E5-7)", () => {
     const file = themeFile({ ...editorial, name: "Quiet green", accent: "#1F6F5C" });
     expect(file).toEqual({
       format: "jobassist-theme",
-      version: 3,
+      version: 4,
       theme: expect.not.objectContaining({ id: expect.anything() }),
     });
     const read = parseThemeFile(JSON.parse(JSON.stringify(file)));
@@ -52,7 +52,7 @@ describe("theme files (E5-7)", () => {
     const file = themeFile(editorial);
     expect(parseThemeFile({ hello: "world" })).toEqual({ ok: false, error: "That file isn't a JobAssist theme." });
     expect(parseThemeFile(null)).toEqual({ ok: false, error: "That file isn't a JobAssist theme." });
-    expect(parseThemeFile({ ...file, version: 4 })).toEqual({ ok: false, error: "That theme comes from a newer version of JobAssist. Update this server first." });
+    expect(parseThemeFile({ ...file, version: 5 })).toEqual({ ok: false, error: "That theme comes from a newer version of JobAssist. Update this server first." });
     expect(parseThemeFile({ ...file, theme: { ...file.theme, headFont: "COMIC_SANS" } })).toEqual({
       ok: false,
       error: "That theme uses a font JobAssist doesn't have (COMIC_SANS).",

@@ -302,3 +302,20 @@ describe("ResumeDocument", () => {
     });
   });
 });
+
+describe("measured templates", () => {
+  it("uses source section order and geometry for both base and tailored content", () => {
+    const geometry = { version: 1, paper: "LETTER", paddingX: 30, paddingY: 20, fontSize: 11, nameSize: 26, headingSize: 13, lineHeight: 1.2, sectionGap: 5, itemGap: 3, headingGap: 4, headerGap: 2, bulletIndent: 24, headingWeight: 400, computerModern: true, smallCapsName: true, showHeadline: false, sectionOrder: ["summary", "education", "projects", "skills", "experience"], sidebarSections: [], technicalSkillsLabel: true, summaryBullet: false };
+    const measured = { ...theme("classic"), templateGeometry: geometry };
+    const { container, unmount } = render(<ResumeDocument theme={measured} profile={profile} paper="A4" />);
+    const titles = sectionTitles();
+    expect(titles.indexOf("Education")).toBeLessThan(titles.indexOf("Projects"));
+    expect(titles.indexOf("Technical Skills")).toBeLessThan(titles.indexOf("Experience"));
+    expect(container.querySelector("article")?.style.getPropertyValue("--pad-x")).toBe("30");
+    expect(container.querySelector("article")?.style.getPropertyValue("--paper-width")).toBe("215.9");
+    expect(container.querySelector("header")?.textContent).not.toContain(profile.basics.headline);
+    unmount();
+    render(<ResumeDocument theme={measured} profile={profile} paper="A4" units={demoResumeUnits()} />);
+    expect(sectionTitles().indexOf("Education")).toBeLessThan(sectionTitles().indexOf("Projects"));
+  });
+});

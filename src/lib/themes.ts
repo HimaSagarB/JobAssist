@@ -1,3 +1,4 @@
+import { readTemplateGeometry } from "./template-geometry";
 import {
   DateStyle,
   Density,
@@ -22,6 +23,8 @@ export type ThemeData = {
   id: string;
   name: string;
   builtIn: boolean;
+  /** Measured PDF layout, validated at the renderer boundary. */
+  templateGeometry?: unknown;
   headFont: ThemeFont;
   bodyFont: ThemeFont;
   /** "#rrggbb" */
@@ -256,6 +259,8 @@ function documentFamily(font: ThemeFont): string {
 export function resolveTheme(theme: ThemeData, layout: ThemeLayout = theme.layout) {
   const split = hasSidebar(layout);
   const serifHeading = THEME_FONTS[theme.headFont].serif;
+  const geometry = readTemplateGeometry(theme.templateGeometry);
+  const computerFont = "var(--script-fonts), var(--typeface-computer-modern), serif";
   return {
     /** A sidebar layout, the sidebar on either side. */
     split,
@@ -271,14 +276,15 @@ export function resolveTheme(theme: ThemeData, layout: ThemeLayout = theme.layou
       // Only a sidebar layout has a sidebar to put it in.
       position: !split && theme.photoPosition === PhotoPosition.SIDEBAR ? PhotoPosition.HEADER_END : theme.photoPosition,
     },
-    headFamily: documentFamily(theme.headFont),
-    bodyFamily: documentFamily(theme.bodyFont),
+    geometry,
+    headFamily: geometry?.computerModern ? computerFont : documentFamily(theme.headFont),
+    bodyFamily: geometry?.computerModern ? computerFont : documentFamily(theme.bodyFont),
     accent: theme.accent,
     /** Text on the accent, e.g. in a banner: white, or ink when that reads better. */
     onAccent: contrastRatio(theme.accent, "#ffffff") >= contrastRatio(theme.accent, INK) ? "#ffffff" : INK,
-    heading: HEADING_STYLES[theme.headingStyle],
-    density: DENSITIES[theme.density],
-    name: serifHeading ? { size: 30, weight: 500 } : { size: 25, weight: 600 },
+    heading: { ...HEADING_STYLES[theme.headingStyle], ...(geometry && { size: geometry.headingSize, weight: geometry.headingWeight, padding: 1, tracking: "0em" }) },
+    density: { ...DENSITIES[theme.density], ...(geometry && { paddingX: geometry.paddingX, paddingY: geometry.paddingY, fontSize: geometry.fontSize, lineHeight: geometry.lineHeight, gap: geometry.sectionGap, itemGap: geometry.itemGap }) },
+    name: geometry ? { size: geometry.nameSize, weight: 400 } : serifHeading ? { size: 30, weight: 500 } : { size: 25, weight: 600 },
   };
 }
 export type ResolvedTheme = ReturnType<typeof resolveTheme>;
@@ -294,8 +300,10 @@ export function unitsToMm(units: number, paper: PaperSize): number {
  * unit size for that paper. Rendered by the print route (E5-5).
  */
 export function printCss(theme: ThemeData, paper: PaperSize): string {
+  const resolved = resolveTheme(theme);
+  paper = resolved.geometry?.paper ?? paper;
   const { widthMm, heightMm } = PAPER_SIZES[paper];
-  const { paddingY, paddingX } = DENSITIES[theme.density];
+  const { paddingY, paddingX } = resolved.density;
   return [
     `@page { size: ${widthMm}mm ${heightMm}mm; margin: ${unitsToMm(paddingY, paper)}mm ${unitsToMm(paddingX, paper)}mm; }`,
     `:root { --u: ${widthMm / PAGE_WIDTH}mm; }`,

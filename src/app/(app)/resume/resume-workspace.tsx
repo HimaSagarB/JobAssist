@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { PaperSize } from "@/generated/prisma/enums";
 import type { ProfileData } from "@/lib/profile";
 import { saveFile } from "@/lib/save-file";
+import { readTemplateGeometry } from "@/lib/template-geometry";
 import { pagesInWords } from "@/lib/settings";
 import { parseThemeFile, themeFile, themeFileName } from "@/lib/theme-file";
 import { PAPER_SIZES, type ThemeData } from "@/lib/themes";
@@ -59,6 +60,7 @@ export function ResumeWorkspace({ profile, themes: initialThemes, usage, baseThe
 
   const base = themes.find((entry) => entry.id === baseId) ?? themes[0];
   const theme: ThemeData = draft ? { ...draft, id: draft.id ?? "draft", builtIn: false } : base;
+  const templatePaper = readTemplateGeometry(theme.templateGeometry)?.paper ?? paper;
   const empty =
     !profile.basics.name.trim() &&
     profile.experience.length === 0 &&
@@ -173,7 +175,7 @@ export function ResumeWorkspace({ profile, themes: initialThemes, usage, baseThe
       <div className="@container flex flex-1 flex-wrap border-t border-line">
         <DocumentPreview
           label={theme.name}
-          meta={(pages) => `${PAPER_SIZES[paper].label} · ${pages} ${pages === 1 ? "page" : "pages"}`}
+          meta={(pages) => `${PAPER_SIZES[templatePaper].label} · ${pages} ${pages === 1 ? "page" : "pages"}`}
           notice={(pages) =>
             empty ? (
               // E11-4: an empty page needs a way forward.
