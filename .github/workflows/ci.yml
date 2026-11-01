@@ -159,7 +159,7 @@ jobs:
       - run: yarn prisma generate
       # Headless Chromium, for the tests and for the app's PDFs.
       - run: yarn playwright install --with-deps --only-shell chromium
-      - run: yarn build
+      - run: yarn build --webpack
       - run: yarn test:e2e
 
       - uses: actions/upload-artifact@v7
