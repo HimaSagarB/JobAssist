@@ -129,3 +129,7 @@ For each job, tailoring considers all saved project descriptions and their skill
 Choose **Knowledge base → Add from text** and paste a project write-up, skills, achievements, preferences or mixed notes into one text area. The active AI provider extracts projects, technologies and personal facts without requiring separate fields. Review the proposed entries, then select **Add to my knowledge base** to merge them additively. Existing knowledge is kept; text updates cannot replace the entire profile. Unnamed projects may receive a descriptive title marked for review.
 
 Extraction uses your active AI connection and its quota. Pending text drafts are separate from resume readings and expire under the configured job-retention policy. A draft is deleted when merged or discarded. Uploaded formatting templates remain separate and never feed this text-import path.
+
+### Daily search coverage
+
+The daily agent follows FreeHire pagination through all results available for the saved query (up to its 10,000-result catalogue limit). Requests run sequentially and stop on cancellation, repeated cursors or source errors; partial searches are labelled incomplete. Other sources retain one page per run to preserve API quota. Existing posting deduplication and search-plan filters apply across the collected results. AI scoring and automatic draft limits remain separate: fetching more results does not score or draft every job. This covers the saved query, not every job on the internet.

@@ -196,7 +196,7 @@ export function AgentSection({
 
       <p className="text-meta text-muted">
         One search a day, and at most three in any 24 hours. Each run scores up to {plural(settings.maxScores, "posting", "postings")}
-        {settings.autoDraft ? ` and prepares up to ${plural(settings.maxDrafts, "draft", "drafts")}` : ""}. Scoring and drafts go to your AI provider with your profile, as a new application does; the job source only gets the search.
+        {settings.autoDraft ? ` and prepares up to ${plural(settings.maxDrafts, "draft", "drafts")}` : ""}. FreeHire searches follow all available pages, up to 10,000 results; other sources use one page per run. Fetching more pages does not raise your scoring or draft limits. Scoring and drafts go to your AI provider with your profile, as a new application does; the job source only gets the search.
       </p>
     </>
   );

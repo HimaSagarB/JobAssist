@@ -24,6 +24,7 @@ import { loadSettings } from "@/lib/settings-data";
 
 import { agentDedupeKey, candidateData } from "./candidates";
 import { agentDraftJob, draftJobKey } from "./draft";
+import { collectSearchPages } from "./search-pages";
 import { recordRunEnd, recordRunStart, runLimitProblem } from "./runs";
 
 // One run of the job agent (E16-3): one search, the postings seen before
@@ -91,7 +92,7 @@ export async function newPostings(postings: readonly FoundPosting[]): Promise<Fo
 const newestFirst = (a: FoundPosting, b: FoundPosting) => (b.postedAt ? Date.parse(b.postedAt) : 0) - (a.postedAt ? Date.parse(a.postedAt) : 0);
 
 /**
- * One run: the first page of results only (one source request), then a
+ * One run: all available FreeHire pages (other sources: one page), then a
  * score for the newest new postings, up to agentMaxScores. Each is kept as a
  * candidate, so it doesn't come back; one below agentMinScore stays out of
  * the queue. With auto-draft on, the best of them get a draft each, up to
@@ -107,7 +108,9 @@ export async function runAgentScan({ manual }: { manual: boolean }, context: Job
   if (limit) return stopped(limit);
 
   const run = await recordRunStart(now, manual);
+  let searchWarning = "";
   const finish = async (result: AgentScanResult) => {
+    if (searchWarning) result = { ...result, message: `${result.message} ${searchWarning}` };
     await recordRunEnd(run, result.message);
     return result;
   };
@@ -117,8 +120,19 @@ export async function runAgentScan({ manual }: { manual: boolean }, context: Job
   const source = config.source!;
   let postings: FoundPosting[];
   try {
-    // The first page only: the agent never asks for a second.
-    postings = (await searchPostings(source, credentialsFor(config, source), settings.agentQuery, null, requestContext(source))).postings;
+    const request = { ...requestContext(source), signal: context.signal };
+    if (source === "FREEHIRE") {
+      const collected = await collectSearchPages(
+        next => searchPostings(source, credentialsFor(config, source), settings.agentQuery, next, request),
+        context.signal,
+        page => context.step(`Fetching FreeHire page ${page}`),
+      );
+      postings = collected.postings;
+      searchWarning = collected.warning;
+    } else {
+      // Paid providers retain their single-page quota budget.
+      postings = (await searchPostings(source, credentialsFor(config, source), settings.agentQuery, null, request)).postings;
+    }
   } catch (error) {
     if (error instanceof JobSearchError) return finish(stopped(error.message));
     throw error;

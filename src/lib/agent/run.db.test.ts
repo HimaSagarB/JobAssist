@@ -34,7 +34,7 @@ vi.mock("@/lib/profile-data", async () => {
 const fake = vi.hoisted(() => ({
   postings: [] as FoundPosting[],
   searches: 0,
-  source: "JSEARCH" as "JSEARCH" | "ADZUNA" | "ARBEITSAGENTUR" | null,
+  source: "JSEARCH" as "JSEARCH" | "ADZUNA" | "ARBEITSAGENTUR" | "FREEHIRE" | null,
   ai: true,
   failOn: null as string | null,
   onScore: (() => {}) as (title: string) => void,
@@ -249,4 +249,16 @@ describe("runAgentScan (E16-3)", () => {
     expect((await runAgentScan({ manual: false }, context(), now)).message).toBe("Scored 1 new posting; none reached your minimum score of 70.");
     expect(demoProfile().basics.name).toBe("Jane Doe");
   });
+});
+
+it("fetches later FreeHire pages, scores their jobs and deduplicates across pages", async () => {
+  fake.source = "FREEHIRE";
+  const { searchPostings } = await import("@/lib/job-search");
+  vi.mocked(searchPostings)
+    .mockResolvedValueOnce({ postings: [page[0]], next: "offset:20" })
+    .mockResolvedValueOnce({ postings: [page[0], page[1]], next: null });
+  const result = await runAgentScan({ manual: true }, context(), now);
+  expect(result.found).toBe(2);
+  expect(result.scored).toBe(2);
+  expect(vi.mocked(searchPostings).mock.calls.at(-1)?.[3]).toBe("offset:20");
 });
