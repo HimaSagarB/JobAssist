@@ -17,7 +17,8 @@ import type { ImportProfileResult } from "@/lib/jobs/import-profile";
 import { messages } from "@/lib/messages";
 import { citationText } from "@/lib/citation";
 import { BASICS_FIELDS, formatDateRange, languageLevelLabel, type BasicsField } from "@/lib/profile";
-import { IMPORT_PROFILE_STEPS, importCounts, type ImportedProfile, type ImportMode } from "@/lib/profile-import";
+import { KnowledgeTextInput } from "../../knowledge/knowledge-text-input";
+import { IMPORT_PROFILE_STEPS, KNOWLEDGE_TEXT_STEPS, importCounts, type ImportedProfile, type ImportMode } from "@/lib/profile-import";
 
 import { JobProgress, jobStep } from "../../new/job-progress";
 import { applyProfileImport, discardProfileImport } from "../actions";
@@ -47,7 +48,11 @@ export function ProfileImport({
   provider,
   initialJobId,
   keptFor,
+  source = "resume",
+  basePath = "/profile/import",
 }: {
+  basePath?: string;
+  source?: "resume" | "text";
   aiReady: boolean;
   provider: AiProvider;
   initialJobId: string | null;
@@ -57,12 +62,15 @@ export function ProfileImport({
   const router = useRouter();
   const [jobId, setJobId] = useState(initialJobId);
   const [revision, setRevision] = useState(0);
+  const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [applying, setApplying] = useState(false);
   const [confirmReplace, setConfirmReplace] = useState(false);
   const job = useJob<ImportProfileResult>(jobId, revision);
   const fileId = useId();
+  const textMode = source === "text" || job?.result?.source === "text";
+  const steps = textMode ? KNOWLEDGE_TEXT_STEPS : IMPORT_PROFILE_STEPS;
 
   const phase = !jobId ? "choose" : job?.status === "DONE" && job.result ? "preview" : "reading";
 
@@ -72,12 +80,12 @@ export function ProfileImport({
   useEffect(() => {
     if (shownPhase.current === phase) return;
     shownPhase.current = phase;
-    area.current?.querySelector<HTMLElement>("h2[tabindex], input[type=file]")?.focus();
+    area.current?.querySelector<HTMLElement>("h2[tabindex], textarea, input[type=file]")?.focus();
   }, [phase]);
 
   const follow = (id: string | null) => {
     setJobId(id);
-    router.replace(id ? `/profile/import?job=${id}` : "/profile/import");
+    router.replace(id ? `${basePath}?job=${id}${textMode ? "&source=text" : ""}` : textMode ? `${basePath}?source=text` : basePath);
   };
 
   // "Choose another file": the reading goes, with the resume's text.
@@ -116,11 +124,11 @@ export function ProfileImport({
   return (
     <>
       <PageHeader
-        title="Import from a resume"
-        description={`Grow your knowledge base from another resume. Supported formats are text-based PDF, Word (.docx), Markdown and plain text. Nothing goes into your profile until you've seen what was found. The file's text is deleted once you've chosen, or after ${keptFor} if you don't.`}
+        title={textMode ? "Add from text" : "Import from a resume"}
+        description={textMode ? `Paste a project write-up, new skills or other information in your own words. Review the extraction, then merge it into your knowledge base. The draft is deleted after merging, discarding, or ${keptFor}.` : `Grow your knowledge base from another resume. Supported formats are text-based PDF, Word (.docx), Markdown and plain text. Nothing goes into your profile until you've seen what was found. The file's text is deleted once you've chosen, or after ${keptFor} if you don't.`}
         actions={
-          <Link href="/profile" className={buttonClassName("secondary")}>
-            Back to your profile
+          <Link href="/knowledge" className={buttonClassName("secondary")}>
+            Back to knowledge base
           </Link>
         }
       />
@@ -129,7 +137,7 @@ export function ProfileImport({
           <Card className="flex flex-col items-start gap-5">
             {!aiReady && (
               <p role="note" className="rounded-card bg-warning-surface px-4 py-3 text-meta text-warning">
-                No AI provider is set up yet, so nothing can read the resume.{" "}
+                No AI provider is set up yet, so extraction is unavailable.{" "}
                 <Link href="/settings?section=ai" className="font-medium text-warning underline underline-offset-2">
                   Choose one in Settings → AI provider
                 </Link>
@@ -137,10 +145,11 @@ export function ProfileImport({
             )}
             {aiReady && !providerOption(provider).local && (
               <p role="note" className="rounded-card bg-warning-surface px-4 py-3 text-meta text-warning">
-                The resume&apos;s text, contact details included, is sent to {providerOption(provider).vendor ?? "your AI server"} to sort
+                {textMode ? "Your text" : "The resume’s text, contact details included,"} is sent to {providerOption(provider).vendor ?? "your AI server"} to sort
                 it into your profile.
               </p>
             )}
+            {textMode ? <KnowledgeTextInput value={text} onChange={setText} onExtracted={follow} disabled={!aiReady} /> : <>
             <div className="flex flex-col gap-2">
               <label htmlFor={fileId} className="text-label text-muted">
                 Your resume, as PDF, Word (.docx) or Markdown (.md)
@@ -156,38 +165,38 @@ export function ProfileImport({
             <Button aria-disabled={!aiReady || !file || uploading || undefined} onClick={() => void (aiReady && !uploading ? read() : undefined)}>
               {uploading ? "Sending…" : "Read my resume →"}
             </Button>
+            </>}
           </Card>
         )}
 
         {phase === "reading" && (
           <JobProgress
-            title="Reading your resume…"
-            steps={IMPORT_PROFILE_STEPS}
-            current={jobStep(IMPORT_PROFILE_STEPS, job)}
+            title={textMode ? "Reading your update…" : "Reading your resume…"}
+            steps={steps}
+            current={jobStep(steps, job)}
             error={job?.status === "FAILED" ? job.error : null}
             onRetry={() => void retry({ id: jobId! }).then((result) => toastResult(result).ok && setRevision((count) => count + 1))}
             onBack={startOver}
-            backLabel="← Choose another file"
+            backLabel={textMode ? "← Edit your text" : "← Choose another file"}
           />
         )}
 
         {phase === "preview" && job?.result && (
           <>
-            <Preview profile={job.result.profile} />
+            <Preview profile={job.result.profile} textMode={textMode} />
             <Card className="flex flex-col gap-4">
               <p className="text-sm text-muted">
-                <strong className="font-medium text-ink">Merge</strong> adds new skills, projects and other knowledge without removing earlier information. Matching descriptions and notes are combined without duplicate lines. Existing personal details, dates and proficiency levels are kept when they conflict; review and edit them in the knowledge base. <strong className="font-medium text-ink">Replace</strong> clears your
-                profile first.
+                <strong className="font-medium text-ink">Merge</strong> adds new skills, projects and other knowledge without removing earlier information. Matching descriptions and notes are combined without duplicate lines. Existing personal details, dates and proficiency levels are kept when they conflict; review and edit them in the knowledge base. {!textMode && <><strong className="font-medium text-ink">Replace</strong> clears your profile first.</>}
               </p>
               <div className="flex flex-wrap items-center gap-3">
                 <Button aria-disabled={applying || undefined} onClick={() => void (applying ? undefined : apply("merge"))}>
-                  Merge into my profile
+                  {textMode ? "Add to my knowledge base" : "Merge into my profile"}
                 </Button>
-                <Button variant="secondary" aria-disabled={applying || undefined} onClick={() => setConfirmReplace(true)}>
+                {!textMode && <Button variant="secondary" aria-disabled={applying || undefined} onClick={() => setConfirmReplace(true)}>
                   Replace my profile…
-                </Button>
+                </Button>}
                 <Button variant="text" onClick={startOver}>
-                  Choose another file
+                  {textMode ? "Use different text" : "Choose another file"}
                 </Button>
               </div>
             </Card>
@@ -207,7 +216,7 @@ export function ProfileImport({
 }
 
 /** Everything read from the resume, with what couldn't be found in it marked. */
-function Preview({ profile }: { profile: ImportedProfile }) {
+function Preview({ profile, textMode = false }: { profile: ImportedProfile; textMode?: boolean }) {
   // In the order of the Basics form, whatever order the model answered in.
   const basics = BASICS_FIELDS.flatMap((field): [BasicsField, string][] => (profile.basics[field] ? [[field, profile.basics[field]]] : []));
   return (
@@ -215,10 +224,12 @@ function Preview({ profile }: { profile: ImportedProfile }) {
       <div className="flex flex-col gap-1">
         {/* Takes focus when the preview appears (E11-3). */}
         <h2 tabIndex={-1} className="font-serif text-section">
-          Here&apos;s what your resume says
+          {textMode ? "Here’s what I found in your text" : "Here\'s what your resume says"}
         </h2>
         <p className="text-meta text-muted">{importCounts(profile)}. Anything marked “check” isn&apos;t in the file word for word.</p>
       </div>
+
+      {(profile.facts?.length ?? 0) > 0 && <Section title="Facts about me"><ul className="space-y-2 text-sm">{profile.facts!.map((fact, index) => <li key={index}>{fact.text}{!fact.found && <> <Check>check wording against your text</Check></>}</li>)}</ul></Section>}
 
       {basics.length > 0 && (
         <Section title="Basics">

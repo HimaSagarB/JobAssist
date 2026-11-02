@@ -38,6 +38,15 @@ export async function applyImportedProfile(db: PrismaClient, profile: ImportedPr
         if (!existing?.value.trim()) await tx.profileField.upsert({ where: { key }, create: { key, value }, update: { value } });
       }
 
+      const savedFacts = await tx.fact.findMany({ where: { applicationId: null }, select: { text: true, sort: true } });
+      let factSort = Math.max(-1, ...savedFacts.map(fact => fact.sort)) + 1;
+      for (const fact of profile.facts ?? []) {
+        if (!fact.text.trim() || savedFacts.some(saved => sameName(saved.text, fact.text))) continue;
+        if (savedFacts.length >= 50) throw new Error("Personal fact limit reached. Remove unused facts before merging more information.");
+        await tx.fact.create({ data: { text: fact.text.trim(), applicationId: null, sort: factSort++ } });
+        savedFacts.push({ text: fact.text.trim(), sort: factSort - 1 });
+      }
+
       const skillIds = await applySkills(tx, profile);
       await applyLanguages(tx, profile);
 

@@ -36,3 +36,11 @@ describe("discardProfileImports (E4-10)", () => {
     expect(await prisma().job.findMany({ select: { id: true }, orderBy: { id: "asc" } })).toEqual([{ id: "failed" }, { id: "posting" }]);
   });
 });
+
+it("keeps independent text drafts when replacing resume readings, and can discard a text draft by id", async () => {
+  await prisma().job.create({ data: { id: "text-draft", type: "import-knowledge", status: "DONE", input: { text: "Private project notes" } } });
+  await discardProfileImports();
+  expect(await prisma().job.findUnique({ where: { id: "text-draft" } })).not.toBeNull();
+  await discardProfileImports("text-draft");
+  expect(await prisma().job.findUnique({ where: { id: "text-draft" } })).toBeNull();
+});

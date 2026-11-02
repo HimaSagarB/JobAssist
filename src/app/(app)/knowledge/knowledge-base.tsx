@@ -53,7 +53,8 @@ export function KnowledgeBase({ initial }: { initial: ProfileData }) {
     <div className="space-y-6 px-5 py-6 sm:px-10">
       <p className="rounded-card border border-line-card bg-paper p-4 text-sm text-muted">This is your saved profile knowledge. Resume imports appear here after you review and save them. Uploaded template PDFs only supply formatting and do not add knowledge. Application-specific notes and facts stay with their applications.</p>
       <div className="flex flex-wrap gap-3" aria-label="Add to knowledge base">
-        <Button onClick={() => setAdding("project")}>Add a project</Button>
+        <Link href="/knowledge/add" className={buttonClassName("primary")}>Add from text</Link>
+        <Button variant="secondary" onClick={() => setAdding("project")}>Add a project</Button>
         <Button variant="secondary" onClick={() => setAdding("information")}>Add new information</Button>
         <Button variant="secondary" onClick={() => setAdding("skills")}>Add skills</Button>
       </div>

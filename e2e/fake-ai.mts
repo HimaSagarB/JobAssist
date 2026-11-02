@@ -135,7 +135,13 @@ const answers: Record<string, (messages: Message[]) => unknown> = {
     return { reply: "Done. I made the summary shorter.", edits: [{ document: "RESUME", unitId: "summary", text: shorter }], tone: null, declined: false };
   },
 
-  extracted_profile: () => ({
+  extracted_profile: (messages) => (messages.some(message => message.content.includes("TEXT-KNOWLEDGE-SAMPLE")) ? {
+    facts: ["My availability reference is TEXT-KNOWLEDGE-SAMPLE."],
+    basics: { name: null, headline: null, email: null, phone: null, dob: null, website: null, address: null, city: null, country: null, linkedin: null, summary: null },
+    skills: ["Python", "GitHub Actions"], languages: [], experience: [], education: [], publications: [], references: [],
+    projects: [{ name: "Signal Toolkit", link: null, startYear: null, startMonth: null, endYear: null, endMonth: null, current: false, bullets: ["Built Signal Toolkit with Python and GitHub Actions"], skills: ["Python", "GitHub Actions"] }],
+  } : {
+    facts: [],
     basics: {
       name: "John Doe",
       headline: "Design Lead",

@@ -145,3 +145,12 @@ it("accumulates descriptions and skills across repeated resumes without duplicat
   expect(await prisma().skill.count()).toBe(3);
   expect(await prisma().projectSkill.count()).toBe(1);
 });
+
+it("merges reviewed personal facts idempotently without removing saved knowledge", async () => {
+  await existingProfile();
+  await prisma().fact.create({ data: { text: "Existing personal context", applicationId: null } });
+  const reading = { ...imported, facts: [{ text: "Available for remote QA roles", found: true }] };
+  await applyImportedProfile(prisma(), reading, "merge"); await applyImportedProfile(prisma(), reading, "merge");
+  expect((await prisma().fact.findMany({ orderBy: { sort: "asc" } })).map(fact => fact.text)).toEqual(expect.arrayContaining(["Existing personal context", "Available for remote QA roles"]));
+  expect(await prisma().fact.count()).toBe(2);
+});

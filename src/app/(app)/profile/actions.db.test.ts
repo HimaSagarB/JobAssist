@@ -414,3 +414,13 @@ describe("applying a profile read from a resume (E4-10)", () => {
   });
 });
 
+
+it("only merges reviewed text knowledge and deletes the draft after approval", async () => {
+  const job = await prisma().job.create({ data: { type: "import-knowledge", input: { text: "I learned Python. I am available for QA roles." }, status: "DONE", result: { source: "text", readWith: "extract-profile@5", profile: { basics: {}, skills: [{ name: "Python", found: true }], languages: [], experience: [], projects: [], education: [], publications: [], references: [], facts: [{ text: "I am available for QA roles.", found: true }] } } } });
+  expect((await applyProfileImport({ jobId: job.id, mode: "replace" })).ok).toBe(false);
+  expect(await prisma().skill.count()).toBe(0);
+  expect((await applyProfileImport({ jobId: job.id, mode: "merge" })).ok).toBe(true);
+  expect(await prisma().skill.count()).toBe(1);
+  expect(await prisma().fact.count()).toBe(1);
+  expect(await prisma().job.findUnique({ where: { id: job.id } })).toBeNull();
+});

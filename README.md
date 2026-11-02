@@ -123,3 +123,9 @@ Use **Knowledge base → Import resume content** to read PDF, Word (.docx), Mark
 **Add a project**, **Add new information** and **Add skills** save directly from the knowledge page. Describe what you built, your contribution and real outcomes, and optionally list technologies used. A matching project name adds novel description lines and skill links to the existing project. Manual entry does not use an AI request.
 
 For each job, tailoring considers all saved project descriptions and their skills, then selects and orders only relevant projects: at most two for a one-page resume, otherwise three. Unselected projects remain in the knowledge base. Unknown project IDs are rejected; omitted projects are not silently reinserted. The tailoring summary reports how many saved projects were included. Selection depends on the connected model; review the generated resume before applying.
+
+### Add knowledge from free-form text
+
+Choose **Knowledge base → Add from text** and paste a project write-up, skills, achievements, preferences or mixed notes into one text area. The active AI provider extracts projects, technologies and personal facts without requiring separate fields. Review the proposed entries, then select **Add to my knowledge base** to merge them additively. Existing knowledge is kept; text updates cannot replace the entire profile. Unnamed projects may receive a descriptive title marked for review.
+
+Extraction uses your active AI connection and its quota. Pending text drafts are separate from resume readings and expire under the configured job-retention policy. A draft is deleted when merged or discarded. Uploaded formatting templates remain separate and never feed this text-import path.

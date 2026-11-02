@@ -2,6 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { isAiConfigured } from "@/lib/ai/config";
+import { importKnowledgeJob } from "@/lib/jobs/import-profile";
+import { startJob } from "@/lib/jobs/runner";
+import { MAX_RESUME_CHARACTERS } from "@/lib/resume-text";
 import { action, ActionError } from "@/lib/action";
 import { mergeKnowledgeText } from "@/lib/knowledge-merge";
 import { loadProfile } from "@/lib/profile-data";
@@ -56,4 +60,10 @@ export const addKnowledgeInformation = action(z.object({ text: z.string().trim()
     await tx.fact.create({ data: { text, sort, applicationId: null } });
   });
   return updatedProfile();
+});
+
+/** Read informal notes with the active provider; results are reviewed before merging. */
+export const extractKnowledgeText = action(z.object({ text: z.string().trim().min(1).max(MAX_RESUME_CHARACTERS) }), async ({ text }) => {
+  if (!(await isAiConfigured())) throw new ActionError("Choose an AI connection in Settings before extracting knowledge from text.");
+  return { jobId: await startJob(importKnowledgeJob, { text }) };
 });

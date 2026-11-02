@@ -16,6 +16,7 @@ const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => router, usePathname: () => null }));
 vi.mock("@/hooks/use-job", () => ({ useJob: vi.fn(() => null) }));
 vi.mock("@/lib/jobs/actions", () => ({ retry: vi.fn() }));
+vi.mock("../../knowledge/actions", () => ({ extractKnowledgeText: vi.fn() }));
 vi.mock("../actions", () => ({
   applyProfileImport: vi.fn(async () => ({ ok: true, data: null })),
   discardProfileImport: vi.fn(async () => ({ ok: true, data: null })),
@@ -134,4 +135,16 @@ describe("ProfileImport (E4-10)", () => {
     await user.click(screen.getByRole("button", { name: "Replace my profile" }));
     expect(applyProfileImport).toHaveBeenCalledWith({ jobId: "job-1", mode: "replace" });
   });
+});
+
+it("previews text knowledge and allows only additive merging", async () => {
+  const user = userEvent.setup();
+  vi.mocked(useJob).mockReturnValue({ ...done, result: { ...done.result, source: "text", profile: { ...profile, facts: [{ text: "Available for remote QA roles", found: true }] } } } as never);
+  render(<ProfileImport keptFor="24 hours" aiReady provider="LOCAL" initialJobId="job-1" source="text" />);
+  expect(screen.getByRole("heading", { name: "Add from text", level: 1 })).toBeInTheDocument();
+  expect(screen.getByText("Available for remote QA roles")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Replace my profile…" })).not.toBeInTheDocument();
+  expect(applyProfileImport).not.toHaveBeenCalled();
+  await user.click(screen.getByRole("button", { name: "Add to my knowledge base" }));
+  expect(applyProfileImport).toHaveBeenCalledWith({ jobId: "job-1", mode: "merge" });
 });

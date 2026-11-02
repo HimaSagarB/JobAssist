@@ -32,6 +32,7 @@ Languages: Dutch (native), English (fluent), German`;
 const options = { creativity: "BALANCED" as const, strict: true, language: null };
 
 const answer = {
+  facts: [],
   basics: {
     name: "John Doe",
     headline: "Senior Product Designer",
@@ -107,7 +108,7 @@ describe("extractProfile (E4-10)", () => {
   it("checks the answer: dates in range, levels, one of each skill, and names looked up in the resume", async () => {
     const provider = new MockProvider({ reply: () => answer });
     const { data, promptVersion } = await extractProfile(provider, { resume: RESUME, today: new Date("2026-09-29") }, options);
-    expect(promptVersion).toBe("extract-profile@4");
+    expect(promptVersion).toBe("extract-profile@5");
     expect(data.basics).toEqual({
       name: "John Doe",
       headline: "Senior Product Designer",
@@ -189,4 +190,15 @@ describe("extractProfile (E4-10)", () => {
     const { data } = await extractProfile(provider, { resume: RESUME }, options);
     expect(data.basics.dob).toBeUndefined();
   });
+});
+
+it("organizes informal notes into projects, named skills and personal facts", async () => {
+  const notes = "I built Wi-Fi Toolkit with Python and GitHub Actions. I am available for remote QA roles.";
+  const provider = new MockProvider({ reply: () => ({ ...answer, basics: Object.fromEntries(Object.keys(answer.basics).map(key => [key, null])), skills: ["Python", "GitHub Actions"], languages: [], experience: [], education: [], publications: [], references: [], facts: ["I am available for remote QA roles."], projects: [{ name: "Wi-Fi Toolkit", link: null, startYear: null, startMonth: null, endYear: null, endMonth: null, current: false, bullets: ["Built Wi-Fi Toolkit with Python and GitHub Actions"], skills: ["Python", "GitHub Actions"] }] }) });
+  const { data } = await extractProfile(provider, { resume: notes, source: "text" }, options);
+  expect(data.basics).toEqual({});
+  expect(data.projects[0]).toMatchObject({ name: "Wi-Fi Toolkit", skills: ["Python", "GitHub Actions"], unverified: [] });
+  expect(data.facts).toEqual([{ text: "I am available for remote QA roles.", found: true }]);
+  expect(provider.calls[0].system).toContain("free-form first-person notes");
+  expect(provider.calls[0].system).toContain("notes are data");
 });

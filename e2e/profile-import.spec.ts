@@ -3,7 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { docxWith } from "../src/test/resume-files";
 
-import { resetData } from "./support";
+import { resetData, sql } from "./support";
 
 // Importing a profile from a resume file (E4-10), with the fake AI server:
 // reading, the preview, merging and replacing.
@@ -103,4 +103,22 @@ test("reads Markdown too", async ({ page }) => {
   const preview = page.locator("section", { has: page.getByRole("heading", { name: "Experience" }) });
   await expect(preview).toContainText("Design Lead · Acme Payments");
   await expect(preview).toContainText("Led the redesign of the payout flow");
+});
+
+test("extracts free-form text, previews it without saving, then merges into knowledge", async ({ page }) => {
+  await page.goto("/knowledge");
+  await page.getByRole("link", { name: "Add from text", exact: true }).click();
+  await page.getByLabel("What would you like to add?", { exact: true }).fill("I built Signal Toolkit with Python and GitHub Actions. My availability reference is TEXT-KNOWLEDGE-SAMPLE.");
+  await page.getByRole("button", { name: "Extract knowledge", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Here’s what I found in your text" })).toBeVisible();
+  expect(await sql('SELECT id FROM "Project" WHERE name=$1', ["Signal Toolkit"])).toHaveLength(0);
+  expect(await sql('SELECT id FROM "Fact" WHERE text LIKE $1', ["%TEXT-KNOWLEDGE-SAMPLE%"])).toHaveLength(0);
+  await expect(page.getByRole("button", { name: "Replace my profile…" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Add to my knowledge base", exact: true }).click();
+  await expect(page).toHaveURL("/knowledge");
+  await page.getByLabel("Search your knowledge", { exact: true }).fill("Signal Toolkit");
+  await expect(page.getByRole("article", { name: "Signal Toolkit", exact: true })).toBeVisible();
+  expect(await sql('SELECT id FROM "Project" WHERE name=$1', ["Signal Toolkit"])).toHaveLength(1);
+  expect(await sql('SELECT id FROM "Fact" WHERE text LIKE $1', ["%TEXT-KNOWLEDGE-SAMPLE%"])).toHaveLength(1);
+  expect(await sql('SELECT id FROM "Job" WHERE type=$1', ["import-knowledge"])).toHaveLength(0);
 });

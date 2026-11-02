@@ -9,7 +9,7 @@ import { action, ActionError } from "@/lib/action";
 import { prisma } from "@/lib/prisma";
 import { fieldsFromBasics, inEntryOrder } from "@/lib/profile";
 import { findOrCreateSkill, firstSort, nextSort } from "@/lib/profile-entries";
-import { discardProfileImports, importProfileJob } from "@/lib/jobs/import-profile";
+import { discardProfileImports, importKnowledgeJob, importProfileJob } from "@/lib/jobs/import-profile";
 import { isPhotoDataUrl, PHOTO_KEY, PHOTO_MAX_LENGTH, PHOTO_ON_RESUMES_KEY } from "@/lib/photo";
 import { loadProfileName } from "@/lib/profile-data";
 import { importCounts } from "@/lib/profile-import";
@@ -468,9 +468,10 @@ export const applyProfileImport = action(
   z.object({ jobId: id, mode: z.enum(["merge", "replace"]) }),
   async ({ jobId, mode }, { toast }) => {
     const job = await prisma.job.findUnique({ where: { id: jobId }, select: { type: true, status: true, result: true } });
-    if (job?.type !== importProfileJob.type || job.status !== JobStatus.DONE) {
+    if (!job || ![importProfileJob.type, importKnowledgeJob.type].includes(job.type) || job.status !== JobStatus.DONE) {
       throw new ActionError("That resume isn't read yet, or it's no longer there. Choose the file again.");
     }
+    if (job.type === importKnowledgeJob.type && mode !== "merge") throw new ActionError("Text updates can only be merged into existing knowledge.");
     const { profile } = importProfileJob.result.parse(job.result);
     await applyImportedProfile(prisma, profile, mode);
     await prisma.job.deleteMany({ where: { id: jobId } });

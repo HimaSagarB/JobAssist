@@ -18,6 +18,8 @@ const span = {
 const unverified = z.array(z.string());
 
 export const importedProfileSchema = z.object({
+  /** Personal knowledge from notes; absent from older resume readings. */
+  facts: z.array(z.object({ text: z.string().max(1000), found: z.boolean() })).optional(),
   basics: z.partialRecord(z.enum(BASICS_FIELDS), z.string()),
   skills: z.array(z.object({ name: z.string(), found: z.boolean() })),
   languages: z.array(z.object({ name: z.string(), level: z.enum(LanguageLevel), levelGiven: z.boolean() })),
@@ -42,6 +44,8 @@ export type ImportedProfile = z.infer<typeof importedProfileSchema>;
 export type ImportMode = "merge" | "replace";
 
 /** The steps of reading a resume, as the progress shows them. */
+export const KNOWLEDGE_TEXT_STEPS = ["Reading your text", "Organizing your knowledge"] as const;
+
 export const IMPORT_PROFILE_STEPS = ["Reading your resume", "Sorting it into your profile"] as const;
 
 /** "3 roles, 1 project, 12 skills…": what a preview holds, for the page and the toast. */
@@ -56,5 +60,6 @@ export function importCounts(profile: ImportedProfile): string {
     plural(profile.skills.length, "skill", "skills"),
     plural(profile.languages.length, "language", "languages"),
     plural(profile.references.length, "reference", "references"),
+    ...((profile.facts?.length ?? 0) > 0 ? [plural(profile.facts!.length, "personal fact", "personal facts")] : []),
   ].join(", ");
 }
