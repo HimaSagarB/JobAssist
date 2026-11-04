@@ -56,7 +56,7 @@ test("reads a resume, shows what it found and merges it into the profile", async
   const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
   expect(violations.filter((violation) => violation.impact === "serious" || violation.impact === "critical")).toEqual([]);
 
-  await page.getByRole("button", { name: "Merge into my profile" }).click();
+  await page.getByRole("button", { name: "Add and merge into knowledge base" }).click();
   await expect(page).toHaveURL("/knowledge");
   await expect(page.getByText(/^Added to your profile: 1 role, 0 projects, 0 degrees, 2 skills, 1 language, 0 references\./)).toBeVisible();
   // Saved personal details and the demo profile's other roles are retained.
@@ -69,8 +69,8 @@ test("reads a resume, shows what it found and merges it into the profile", async
 
 test("replaces the profile after asking", async ({ page }) => {
   await readResume(page);
-  await page.getByRole("button", { name: "Replace my profile…" }).click();
-  await page.getByRole("alertdialog").getByRole("button", { name: "Replace my profile" }).click();
+  await page.getByRole("button", { name: "Replace profile entries…" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Replace profile entries" }).click();
   await expect(page).toHaveURL("/knowledge");
   await page.goto("/profile?section=experience");
   await expect(page.locator("button[aria-expanded]")).toHaveCount(1);
@@ -113,7 +113,7 @@ test("extracts free-form text, previews it without saving, then merges into know
   await expect(page.getByRole("heading", { name: "Here’s what I found in your text" })).toBeVisible();
   expect(await sql('SELECT id FROM "Project" WHERE name=$1', ["Signal Toolkit"])).toHaveLength(0);
   expect(await sql('SELECT id FROM "Fact" WHERE text LIKE $1', ["%TEXT-KNOWLEDGE-SAMPLE%"])).toHaveLength(0);
-  await expect(page.getByRole("button", { name: "Replace my profile…" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Replace profile entries…" })).toHaveCount(0);
   await page.getByRole("button", { name: "Add to my knowledge base", exact: true }).click();
   await expect(page).toHaveURL("/knowledge");
   await page.getByLabel("Search your knowledge", { exact: true }).fill("Signal Toolkit");

@@ -125,7 +125,7 @@ export function ProfileImport({
     <>
       <PageHeader
         title={textMode ? "Add from text" : "Import from a resume"}
-        description={textMode ? `Paste a project write-up, new skills or other information in your own words. Review the extraction, then merge it into your knowledge base. The draft is deleted after merging, discarding, or ${keptFor}.` : `Grow your knowledge base from another resume. Supported formats are text-based PDF, Word (.docx), Markdown and plain text. Nothing goes into your profile until you've seen what was found. The file's text is deleted once you've chosen, or after ${keptFor} if you don't.`}
+        description={textMode ? `Paste a project write-up, new skills or other information in your own words. Review what JobAssist extracts, then add it to your existing knowledge base. The draft is deleted after merging, discarding, or ${keptFor}.` : `Upload a text-based PDF, Word (.docx), Markdown or plain text resume to preview its contents. After review, choose whether to add the information to your existing knowledge base or replace the profile entries listed in the confirmation. The file's text is deleted once you've chosen, or after ${keptFor} if you don't.`}
         actions={
           <Link href="/knowledge" className={buttonClassName("secondary")}>
             Back to knowledge base
@@ -186,14 +186,17 @@ export function ProfileImport({
             <Preview profile={job.result.profile} textMode={textMode} />
             <Card className="flex flex-col gap-4">
               <p className="text-sm text-muted">
-                <strong className="font-medium text-ink">Merge</strong> adds new skills, projects and other knowledge without removing earlier information. Matching descriptions and notes are combined without duplicate lines. Existing personal details, dates and proficiency levels are kept when they conflict; review and edit them in the knowledge base. {!textMode && <><strong className="font-medium text-ink">Replace</strong> clears your profile first.</>}
+                <strong className="font-medium text-ink">Add and merge</strong> adds new entries, combines matching descriptions and notes, and keeps your existing personal details, dates and proficiency levels when they conflict.
               </p>
+              {!textMode && <p className="text-sm text-muted">
+                <strong className="font-medium text-ink">Replace profile entries</strong> removes your existing basics, skills, languages, roles, projects, education, publications and references before importing the resume. Your saved personal facts and photo are kept.
+              </p>}
               <div className="flex flex-wrap items-center gap-3">
                 <Button aria-disabled={applying || undefined} onClick={() => void (applying ? undefined : apply("merge"))}>
-                  {textMode ? "Add to my knowledge base" : "Merge into my profile"}
+                  {textMode ? "Add to my knowledge base" : "Add and merge into knowledge base"}
                 </Button>
                 {!textMode && <Button variant="secondary" aria-disabled={applying || undefined} onClick={() => setConfirmReplace(true)}>
-                  Replace my profile…
+                  Replace profile entries…
                 </Button>}
                 <Button variant="text" onClick={startOver}>
                   {textMode ? "Use different text" : "Choose another file"}
@@ -203,9 +206,9 @@ export function ProfileImport({
             <ConfirmDialog
               open={confirmReplace}
               onOpenChange={setConfirmReplace}
-              title="Replace your profile?"
-              description="Your basics, skills, languages, roles, projects, education, publications and references are removed first; then your profile holds exactly what was read from the resume. Stored application text is not rewritten; removing profile records can change how existing documents render."
-              confirmLabel="Replace my profile"
+              title="Replace your saved profile entries?"
+              description="This removes your saved basics, skills, languages, roles, projects, education, publications and references, including entries missing from the uploaded resume. JobAssist then saves the extracted entries and adds any new personal facts. Your existing personal facts and photo are kept. Existing application documents that use your profile may display differently."
+              confirmLabel="Replace profile entries"
               onConfirm={() => void apply("replace")}
             />
           </>

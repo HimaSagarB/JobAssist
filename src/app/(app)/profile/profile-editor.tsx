@@ -70,7 +70,7 @@ export function ProfileEditor({ initial, section, order }: { initial: ProfileDat
     <TrackSaveContext value={saves.track}>
       <PageHeader
         title="Your profile"
-        description="Everything here feeds your resumes and cover letters. Fill in what you like. You can always come back to it."
+        description="Everything here feeds your resumes and cover letters. Importing a resume opens a preview where you can add and merge its contents or replace saved profile entries."
         actions={
           <>
             <SavedIndicator status={saves.status} savedAt={saves.savedAt} />

@@ -212,7 +212,7 @@ export function DataSection({
         </DataRow>
         <DataRow
           title="Import"
-          description="Restore from an export file. Your current data is backed up first."
+          description="Preview a JobAssist export. Confirming the import replaces saved profile data, applications, custom themes and other records covered by the export. JobAssist backs up your current data first."
           action={
             <>
               <input

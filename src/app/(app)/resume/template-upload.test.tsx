@@ -14,7 +14,7 @@ describe("template upload", () => {
     const fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ theme }) });
     vi.stubGlobal("fetch", fetch);
     render(<TemplateUpload onPreview={onPreview} />);
-    expect(screen.getByText(/do not add skills/)).toBeInTheDocument();
+    expect(screen.getByText(/Save theme adds a new theme/)).toBeInTheDocument();
     const button = screen.getByRole("button", { name: "Preview template style" });
     expect(button).toBeDisabled();
     const file = new File(["%PDF-test"], "private-resume.pdf", { type: "application/pdf" });

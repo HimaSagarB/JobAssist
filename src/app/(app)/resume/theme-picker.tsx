@@ -120,6 +120,7 @@ export function ThemePicker({ themes, activeId, userName, onSelect, onCustomize,
           <Button variant="text" size="sm" className="self-start" onClick={() => fileInput.current?.click()}>
             Import a theme…
           </Button>
+          <p className="text-meta text-muted">Import adds a new theme and makes it your base resume default.</p>
           <input
             ref={fileInput}
             type="file"

@@ -112,7 +112,7 @@ describe("ProfileImport (E4-10)", () => {
     expect(screen.getByText("Payouts for online marketplaces")).toBeInTheDocument();
     expect(screen.getByText(/^German/)).toHaveTextContent("(no level given; change it any time)");
 
-    await user.click(screen.getByRole("button", { name: "Merge into my profile" }));
+    await user.click(screen.getByRole("button", { name: "Add and merge into knowledge base" }));
     expect(applyProfileImport).toHaveBeenCalledWith({ jobId: "job-1", mode: "merge" });
     expect(router.push).toHaveBeenCalledWith("/knowledge");
   });
@@ -130,9 +130,9 @@ describe("ProfileImport (E4-10)", () => {
     const user = userEvent.setup();
     vi.mocked(useJob).mockReturnValue(done as never);
     render(<ProfileImport keptFor="24 hours" aiReady provider="LOCAL" initialJobId="job-1" />);
-    await user.click(screen.getByRole("button", { name: "Replace my profile…" }));
+    await user.click(screen.getByRole("button", { name: "Replace profile entries…" }));
     expect(applyProfileImport).not.toHaveBeenCalled();
-    await user.click(screen.getByRole("button", { name: "Replace my profile" }));
+    await user.click(screen.getByRole("button", { name: "Replace profile entries" }));
     expect(applyProfileImport).toHaveBeenCalledWith({ jobId: "job-1", mode: "replace" });
   });
 });
@@ -143,7 +143,7 @@ it("previews text knowledge and allows only additive merging", async () => {
   render(<ProfileImport keptFor="24 hours" aiReady provider="LOCAL" initialJobId="job-1" source="text" />);
   expect(screen.getByRole("heading", { name: "Add from text", level: 1 })).toBeInTheDocument();
   expect(screen.getByText("Available for remote QA roles")).toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "Replace my profile…" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Replace profile entries…" })).not.toBeInTheDocument();
   expect(applyProfileImport).not.toHaveBeenCalled();
   await user.click(screen.getByRole("button", { name: "Add to my knowledge base" }));
   expect(applyProfileImport).toHaveBeenCalledWith({ jobId: "job-1", mode: "merge" });

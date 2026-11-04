@@ -144,6 +144,11 @@ export function ThemeBuilder({ draft, onChange, onSave, onCancel, saving }: Them
       <Choices label="Section titles" value={draft.headingStyle} options={options(HEADING_STYLES)} onChange={set("headingStyle")} />
       <Choices label="Dates" value={draft.dateStyle} options={options(DATE_STYLES)} onChange={set("dateStyle")} />
       <Choices label="Spacing" value={draft.density} options={options(DENSITIES)} onChange={set("density")} />
+      <p className="text-meta text-muted">
+        {draft.id
+          ? "Save theme updates this custom theme wherever it is used and sets it as your base resume default."
+          : "Save theme adds a new theme and makes it your base resume default."}
+      </p>
       <div className="flex gap-2 pt-1.5">
         <Button type="submit" className="flex-1" disabled={saving}>
           {saving ? "Saving…" : "Save theme"}
