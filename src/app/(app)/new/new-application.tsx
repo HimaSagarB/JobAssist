@@ -49,6 +49,7 @@ export type Draft = {
   step: "paste" | "reading" | "review" | "creating";
   posting: string;
   postingUrl: string;
+  linkImport?: { site: string; source: "structured" | "page" } | null;
   readJobId: string | null;
   /** The posting text that was read, so going back and on again doesn't read it twice. */
   readFor: string | null;
@@ -196,6 +197,7 @@ export function NewApplication({ aiReady, writeInClaude = false, samplePosting, 
   }, [fromPosting, initial, router]);
   const [starting, setStarting] = useState(false);
   const [fetching, setFetching] = useState(false);
+  const [fetchError, setFetchError] = useState("");
   const [readRevision, setReadRevision] = useState(0);
 
   // E11-3: a new step replaces the controls of the last one, so focus moves to
@@ -252,16 +254,27 @@ export function NewApplication({ aiReady, writeInClaude = false, samplePosting, 
   const fetchFromLink = async () => {
     if (!draft.postingUrl.trim()) return toast("Enter the link to the posting first.");
     setFetching(true);
-    const result = toastResult(await fetchPostingText({ link: draft.postingUrl }));
-    setFetching(false);
-    if (!result.ok) return;
-    const previous = draft.posting;
-    update({ posting: result.data.text });
-    const site = new URL(result.data.url).hostname.replace(/^www\./, "");
-    toast(
-      `Fetched the posting from ${site}. Check it before reading it.`,
-      previous.trim() ? { action: { label: "Undo", onClick: () => update({ posting: previous }) } } : {},
-    );
+    setFetchError("");
+    update({ linkImport: null });
+    try {
+      const result = await fetchPostingText({ link: draft.postingUrl });
+      if (!result.ok) {
+        setFetchError(result.error);
+        return;
+      }
+      const previous = draft.posting;
+      const site = new URL(result.data.url).hostname.replace(/^www\./, "");
+      update({ posting: result.data.text, linkImport: { site, source: result.data.source } });
+      if (previous.trim()) {
+        toast("Replaced the job posting text with the fetched text.", {
+          action: { label: "Undo", onClick: () => update({ posting: previous, linkImport: null }) },
+        });
+      }
+    } catch {
+      setFetchError("The request failed. Try the link again.");
+    } finally {
+      setFetching(false);
+    }
   };
 
   // NEW-5: a missing skill goes into the profile, and the row becomes partly covered.
@@ -343,7 +356,7 @@ export function NewApplication({ aiReady, writeInClaude = false, samplePosting, 
     <>
       <PageHeader
         title="New application"
-        description="Paste a job posting. I'll pull out the details, check it against your profile, and draft a tailored resume and cover letter."
+        description="Paste a job link or the full job description. Review the text, then have JobAssist check it against your profile and draft a tailored resume and cover letter."
       />
       <div className="flex max-w-[816px] flex-col gap-6 px-10 pb-20">
         <Stepper
@@ -367,20 +380,13 @@ export function NewApplication({ aiReady, writeInClaude = false, samplePosting, 
                 </p>
               ) : !aiReady && (
                 <p role="note" className="rounded-card bg-warning-surface px-4 py-3 text-meta text-warning">
-                  No AI provider is set up yet, so nothing can read the posting.{" "}
+                  No AI provider is set up yet, so JobAssist needs an AI connection to analyze the posting and write documents.{" "}
                   <Link href="/settings?section=ai" className="font-medium text-warning underline underline-offset-2">
                     Choose one in Settings → AI provider
                   </Link>
                 </p>
               )}
               <Card className="flex flex-col gap-5">
-                <Textarea
-                  label="Job posting"
-                  rows={14}
-                  placeholder="Paste the full posting here: title, company, requirements, the lot."
-                  value={draft.posting}
-                  onChange={(event) => update({ posting: event.target.value })}
-                />
                 <div className="flex flex-col gap-2">
                   <div className="flex items-end gap-3">
                     <Input
@@ -394,7 +400,11 @@ export function NewApplication({ aiReady, writeInClaude = false, samplePosting, 
                       inputMode="url"
                       placeholder="https://"
                       value={draft.postingUrl}
-                      onChange={(event) => update({ postingUrl: event.target.value })}
+                      disabled={fetching}
+                      onChange={(event) => {
+                        setFetchError("");
+                        update({ postingUrl: event.target.value, linkImport: null });
+                      }}
                     />
                     <Button
                       variant="secondary"
@@ -402,25 +412,41 @@ export function NewApplication({ aiReady, writeInClaude = false, samplePosting, 
                       aria-disabled={fetching || undefined}
                       onClick={() => void (fetching ? undefined : fetchFromLink())}
                     >
-                      {fetching ? "Fetching…" : "Fetch"}
+                      {fetching ? "Reading link…" : "Read job link"}
                     </Button>
                   </div>
                   <p className="text-meta text-muted">
-                    Fetch asks the job site for the page from your server, so it needs internet access. Check what it brings before reading it.
+                    Paste a public job link. Reading it replaces any text in the Job posting field when text is found. You can also paste the full description below.
                   </p>
+                  {fetching && <p role="status" className="text-sm text-muted">Reading the job site…</p>}
+                  {fetchError && <p role="alert" className="text-sm text-warning">Could not read the job link. {fetchError} Copy the job description from the employer’s page and paste it below.</p>}
+                  {draft.linkImport && <p role="status" className="text-sm text-ink">
+                    {draft.linkImport.source === "structured"
+                      ? `Job description found on ${draft.linkImport.site}.`
+                      : `Page text imported from ${draft.linkImport.site}. It may include other page content or omit parts of the description.`}
+                    {" "}Review the text below for the role, responsibilities and requirements before continuing.
+                  </p>}
                 </div>
+                <Textarea
+                  label="Job posting"
+                  rows={14}
+                  placeholder="Paste the full posting here: title, company, requirements, the lot."
+                  value={draft.posting}
+                  disabled={fetching}
+                  onChange={(event) => update({ posting: event.target.value, linkImport: null })}
+                />
               </Card>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 {samplePosting ? (
-                  <Button variant="text" className="underline underline-offset-[3px]" onClick={() => update({ posting: samplePosting })}>
+                  <Button variant="text" className="underline underline-offset-[3px]" disabled={fetching} onClick={() => update({ posting: samplePosting, linkImport: null })}>
                     Use a sample posting
                   </Button>
                 ) : (
                   <span />
                 )}
                 <Button
-                  aria-disabled={!draft.posting.trim() || starting || undefined}
-                  onClick={() => void (starting ? undefined : writeInClaude ? writeWithClaude() : read())}
+                  aria-disabled={!draft.posting.trim() || starting || fetching || undefined}
+                  onClick={() => void (starting || fetching ? undefined : writeInClaude ? writeWithClaude() : read())}
                 >
                   {writeInClaude ? "Write it with Claude →" : "Read the posting →"}
                 </Button>

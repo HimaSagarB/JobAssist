@@ -92,15 +92,16 @@ describe("the paste step (E7-1)", () => {
 
   it("fetches the posting from its link, with a way back to what was there (E7-8)", async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchPostingText).mockResolvedValueOnce({ ok: true, data: { text: "Ledgerly: Senior Designer\n\nWhat you'll do…", url: "https://www.jobs.ledgerly.example/123" } });
+    vi.mocked(fetchPostingText).mockResolvedValueOnce({ ok: true, data: { text: "Ledgerly: Senior Designer\n\nWhat you'll do…", url: "https://www.jobs.ledgerly.example/123", source: "structured" } });
     render(<NewApplication {...props} />);
-    expect(screen.getByText(/^Fetch asks the job site for the page from your server/)).toBeInTheDocument();
+    expect(screen.getByText(/^Paste a public job link/)).toBeInTheDocument();
     await user.type(screen.getByLabelText("Job posting"), "My own notes");
     await user.type(screen.getByLabelText(/^Link to the posting/), "jobs.ledgerly.example/123");
-    await user.click(screen.getByRole("button", { name: "Fetch" }));
+    await user.click(screen.getByRole("button", { name: "Read job link" }));
     expect(fetchPostingText).toHaveBeenCalledWith({ link: "jobs.ledgerly.example/123" });
     expect(screen.getByLabelText("Job posting")).toHaveValue("Ledgerly: Senior Designer\n\nWhat you'll do…");
-    expect(toast).toHaveBeenCalledWith("Fetched the posting from jobs.ledgerly.example. Check it before reading it.", {
+    expect(screen.getByRole("status")).toHaveTextContent("Job description found on jobs.ledgerly.example.");
+    expect(toast).toHaveBeenCalledWith("Replaced the job posting text with the fetched text.", {
       action: { label: "Undo", onClick: expect.any(Function) },
     });
     act(() => vi.mocked(toast).mock.calls.at(-1)![1]!.action!.onClick());
@@ -110,9 +111,15 @@ describe("the paste step (E7-1)", () => {
   it("explains why a link can't be fetched, and asks for one first", async () => {
     const user = userEvent.setup();
     render(<NewApplication {...props} />);
-    await user.click(screen.getByRole("button", { name: "Fetch" }));
+    await user.click(screen.getByRole("button", { name: "Read job link" }));
     expect(toast).toHaveBeenCalledWith("Enter the link to the posting first.");
     expect(fetchPostingText).not.toHaveBeenCalled();
+    vi.mocked(fetchPostingText).mockResolvedValueOnce({ ok: false, error: "The site requires sign-in." });
+    await user.type(screen.getByLabelText("Job posting"), "My existing text");
+    await user.type(screen.getByLabelText(/^Link to the posting/), "https://jobs.example/123");
+    await user.click(screen.getByRole("button", { name: "Read job link" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("The site requires sign-in.");
+    expect(screen.getByLabelText("Job posting")).toHaveValue("My existing text");
   });
 
   it("points to Settings when no AI provider is set up", () => {

@@ -90,7 +90,7 @@ export const fetchPostingText = action(z.object({ link: z.string().max(2000) }),
   if (!url) throw new ActionError("Enter the link to the posting first.");
   const fetched = await fetchPosting(url);
   if (!fetched.ok) throw new ActionError(fetched.error);
-  return { text: fetched.text, url: fetched.url };
+  return { text: fetched.text, url: fetched.url, source: fetched.source };
 });
 
 /** A link as typed, with https:// added when it has no scheme; empty stays empty. */
