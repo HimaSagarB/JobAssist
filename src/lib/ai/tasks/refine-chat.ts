@@ -26,7 +26,7 @@ import {
   type Task,
 } from "./prompt-parts";
 
-export const REFINE_CHAT_VERSION = "refine-chat@9";
+export const REFINE_CHAT_VERSION = "refine-chat@10";
 
 const answerSchema = z.object({
   reply: z.string(),

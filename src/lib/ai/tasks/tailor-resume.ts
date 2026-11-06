@@ -23,7 +23,7 @@ import {
   type Task,
 } from "./prompt-parts";
 
-export const TAILOR_RESUME_VERSION = "tailor-resume@8";
+export const TAILOR_RESUME_VERSION = "tailor-resume@9";
 
 const answerSchema = z.object({
   summary: z.string(),
