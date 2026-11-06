@@ -470,7 +470,7 @@ describe("refineChat", () => {
       declined: false,
     };
     const { data, promptVersion } = await refineChat(model(answer), input, options);
-    expect(promptVersion).toBe("refine-chat@8");
+    expect(promptVersion).toBe("refine-chat@9");
     expect(data).toEqual({
       reply: "I made the letter more formal.",
       tone: "FORMAL",

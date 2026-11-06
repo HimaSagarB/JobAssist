@@ -47,6 +47,7 @@ export function refineSuggestions({
 
   return {
     resume: [
+      "Expand existing resume bullets",
       ...(hasSummary ? ["Make the summary shorter"] : []),
       strongest ? `Emphasize ${strongest}` : "Emphasize leadership",
       // Something the profile lacks shows how the AI declines to invent it (APP-9).

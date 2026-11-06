@@ -31,7 +31,7 @@ describe("refineSuggestions (E8-5)", () => {
       items: [item(requirements[0].text, "covered"), item(requirements[1].text, "covered", "Design systems"), item(requirements[2].text, "gap")],
     };
     expect(refineSuggestions({ match, requirements, tone: "WARM", hasSummary: true })).toEqual({
-      resume: ["Make the summary shorter", "Emphasize Design systems", "Mention Kubernetes"],
+      resume: ["Expand existing resume bullets", "Make the summary shorter", "Emphasize Design systems", "Mention Kubernetes"],
       letter: ["Make it more formal", "Shorter, under 200 words", "Handle the Kubernetes gap differently"],
       email: ["Shorter, under 100 words", "Make it more formal", "Lead with Design systems"],
     });
@@ -49,7 +49,7 @@ describe("refineSuggestions (E8-5)", () => {
 
   it("falls back to the prototype's chips without a match", () => {
     expect(refineSuggestions({ match: null, requirements: [], tone: "FORMAL", hasSummary: false })).toEqual({
-      resume: ["Emphasize leadership", "Mention accessibility"],
+      resume: ["Expand existing resume bullets", "Emphasize leadership", "Mention accessibility"],
       letter: ["Make it warmer", "Shorter, under 200 words"],
       email: ["Shorter, under 100 words", "Make it warmer", "Make the subject line stand out"],
     });

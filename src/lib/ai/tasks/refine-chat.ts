@@ -26,7 +26,7 @@ import {
   type Task,
 } from "./prompt-parts";
 
-export const REFINE_CHAT_VERSION = "refine-chat@8";
+export const REFINE_CHAT_VERSION = "refine-chat@9";
 
 const answerSchema = z.object({
   reply: z.string(),
@@ -43,6 +43,8 @@ const INSTRUCTIONS = `You help a candidate refine their tailored resume, cover l
 - The email goes out with the resume and cover letter attached. Its "to" unit is the recipient ("Name <address>"), "subject" its subject line and "body" the whole message, from the greeting to the sign-off and the candidate's name.
 - tone: set it (WARM, DIRECT or FORMAL) only when the request asks for a different tone for the letter; otherwise null. When you change the tone, rewrite the letter's paragraphs to match. A different tone for the email is an edit to the email, not a new tone.
 - For a mixed request, split it into independent changes. For example, if asked to rewrite existing API checks for QA and add Kubernetes, rewrite the supported checks as API test automation, omit Kubernetes unless backed by evidence, return the edit with declined=false, and briefly explain the omission.
+- Treat requests to fill the page, extend the resume, expand points or add detail as editing requests. Use the existing resume and its supporting profile entries and application facts. Expand compact points by spelling out the documented action, tool, scope or purpose, and split distinct supported actions into separate bullets where helpful. Keep each detail attached to its original role or project. For example, "Built Python scripts to test Wi-Fi roaming and report failures" can become two points: "Automated Wi-Fi roaming checks using Python scripts" and "Reported roaming failures for review." A request for more length is sufficient reason to make a useful edit even when no new facts are supplied.
+- Treat a page-fill request as a target for how much detail to include. Make the requested edits and tell the candidate to check the preview for actual page fit. Prefer relevant detail over repetition or filler. Reconsider earlier refusals in the chat using these instructions.
 - Treat requests to sound stronger, match the job, or use equivalent terminology as requests to improve the wording. Make the supported edits directly.
 - If part of the request needs evidence the candidate hasn't provided, complete the supported parts or give the closest truthful rewrite. Keep declined false when you make any edits. Mention the specific missing detail in the reply only if it matters to the request.
 - Set declined to true with no edits only when the request cannot be fulfilled in any meaningful way using supported facts or editable units. Ask for the particular evidence that would let you help.
@@ -88,7 +90,7 @@ export const refineChat: Task<RefineInput, Refinement> = async (provider, input,
   const { request, history, target, viewing, resume, letter, email = [], profile, extracted, tone, facts, posting } = input;
   const looking = viewing ? LOOKING_AT[viewing] : null;
   const answer = await provider.complete({
-    system: system(INSTRUCTIONS, `Current letter tone: ${TONES[tone].label}.`, truthfulness(options.strict), candidateFacts(profile, facts), CREATIVITY[options.creativity], JOB_ALIGNED_WORDING, languageRule(options.language), UNTRUSTED_POSTING, NO_EM_DASHES, "Before answering, check whether you can make any useful supported edit. If you can, make it and return declined=false even if another part is unsupported."),
+    system: system(INSTRUCTIONS, `Current letter tone: ${TONES[tone].label}.`, truthfulness(options.strict), candidateFacts(profile, facts), CREATIVITY[options.creativity], JOB_ALIGNED_WORDING, languageRule(options.language), UNTRUSTED_POSTING, NO_EM_DASHES, "Before answering, check whether you can make any useful supported edit. In particular, expand or split existing resume bullets when asked to fill a page. Return the actual revised units with declined=false whenever you can make a useful edit."),
     messages: [
       {
         role: "user",
