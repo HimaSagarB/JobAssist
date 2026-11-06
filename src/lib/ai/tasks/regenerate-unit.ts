@@ -15,7 +15,9 @@ import {
   candidateFacts,
   COVER_LETTER_APPROACH,
   CREATIVITY,
+  JOB_ALIGNED_WORDING,
   jobForPrompt,
+  postingForPrompt,
   languageRule,
   NO_EM_DASHES,
   profileForPrompt,
@@ -25,7 +27,7 @@ import {
   type Task,
 } from "./prompt-parts";
 
-export const REGENERATE_UNIT_VERSION = "regenerate-unit@6";
+export const REGENERATE_UNIT_VERSION = "regenerate-unit@7";
 
 /** What the letter's frame parts are, for the model (E8-11). */
 const FRAME_PARTS: Record<string, string> = {
@@ -87,6 +89,7 @@ export const regenerateUnit: Task<RegenerateInput, Unit> = async (provider, inpu
       kind === DocumentKind.COVER_LETTER && FRAME_PARTS[unit.id],
       kind === DocumentKind.EMAIL && EMAIL_PARTS[unit.id],
       truthfulness(options.strict),
+      JOB_ALIGNED_WORDING,
       candidateFacts(profile, facts),
       CREATIVITY[options.creativity],
       languageRule(options.language),
@@ -99,6 +102,7 @@ export const regenerateUnit: Task<RegenerateInput, Unit> = async (provider, inpu
         content: [
           `The candidate's profile:\n${profileForPrompt(profile)}`,
           `The job:\n${jobForPrompt(extracted, null)}`,
+          `The original job description:\n${postingForPrompt(posting)}`,
           `The whole ${what} now:\n${JSON.stringify(document, null, 2)}`,
           applicationFacts(facts),
           `Write a new version of "${unit.label}" (${unit.id}). Its current text:\n${unit.text}`,

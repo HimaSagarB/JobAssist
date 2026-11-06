@@ -130,12 +130,15 @@ export function truthfulness(strict: boolean): string {
     : "Stay truthful to the candidate's profile and what they tell you. You may draw reasonable conclusions from it, but never invent employers, job titles, dates or credentials.";
 }
 
+/** Tailor the expression of evidence to the job without changing the claim. */
+export const JOB_ALIGNED_WORDING = `Actively translate relevant experience into the job's terminology. Find the closest evidence for what the employer needs, then rewrite it with precise action verbs and recognized equivalent terms. Describe transferable experience at the level the evidence supports. For example, "wrote Python scripts to check wireless roaming" supports "automated Wi-Fi roaming validation using Python." If the job mentions Playwright and the candidate automated browser checks in Selenium, emphasize browser test automation and retain Selenium as the tool. Preserve the candidate's actual role, ownership, scale and outcomes. Use the posting as a guide to what matters and how to describe it, never as evidence that the candidate did it. Avoid keyword stuffing.`;
+
 /** House style for everything the model writes. */
 export const NO_EM_DASHES = "Never use em-dashes (\u2014). Use a comma, colon, full stop or parentheses instead.";
 
 /** SET-3, as wording, for every provider. */
 export const CREATIVITY: Record<Creativity, string> = {
-  FAITHFUL: "Stay close to the candidate's own wording; rephrase only where it makes things clearer.",
+  FAITHFUL: "Keep the candidate's voice and meaning. Use equivalent job terminology where it improves clarity or relevance.",
   BALANCED: "Rephrase freely for clarity and relevance to this job, keeping every fact as it is.",
   EXPRESSIVE: "Write with personality and varied phrasing. Only the wording is free: the facts stay exactly as they are.",
 };

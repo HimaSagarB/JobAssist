@@ -58,7 +58,7 @@ export function AiBehaviour({ initial }: { initial: Behaviour }) {
       <div className="flex flex-col gap-2 border-t border-line py-4">
         <Toggle
           label="Never invent experience"
-          description="Drafts may only use facts from your profile. If a job asks for something you don't have, I'll say so instead of making it up."
+          description="Drafts use evidence from your profile and application notes. JobAssist can rephrase that experience in the employer’s terminology and will flag claims that need checking."
           checked={behaviour.strict}
           onCheckedChange={(strict) => change({ strict })}
         />

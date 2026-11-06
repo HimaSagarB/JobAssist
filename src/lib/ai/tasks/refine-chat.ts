@@ -14,7 +14,9 @@ import {
   applicationFacts,
   candidateFacts,
   CREATIVITY,
+  JOB_ALIGNED_WORDING,
   jobForPrompt,
+  postingForPrompt,
   languageRule,
   NO_EM_DASHES,
   profileForPrompt,
@@ -24,7 +26,7 @@ import {
   type Task,
 } from "./prompt-parts";
 
-export const REFINE_CHAT_VERSION = "refine-chat@7";
+export const REFINE_CHAT_VERSION = "refine-chat@8";
 
 const answerSchema = z.object({
   reply: z.string(),
@@ -40,7 +42,10 @@ const INSTRUCTIONS = `You help a candidate refine their tailored resume, cover l
 - Never edit a publication (a resume unit whose unitId starts with "publication:"): it's the candidate's citation, as they wrote it. If asked to, say they can edit it or leave it out themselves.
 - The email goes out with the resume and cover letter attached. Its "to" unit is the recipient ("Name <address>"), "subject" its subject line and "body" the whole message, from the greeting to the sign-off and the candidate's name.
 - tone: set it (WARM, DIRECT or FORMAL) only when the request asks for a different tone for the letter; otherwise null. When you change the tone, rewrite the letter's paragraphs to match. A different tone for the email is an edit to the email, not a new tone.
-- If the request needs facts the profile doesn't have (a skill, employer, number, credential…), don't make them up: set declined to true, make no edits, and say in reply what the candidate could add to their profile first.
+- For a mixed request, split it into independent changes. For example, if asked to rewrite existing API checks for QA and add Kubernetes, rewrite the supported checks as API test automation, omit Kubernetes unless backed by evidence, return the edit with declined=false, and briefly explain the omission.
+- Treat requests to sound stronger, match the job, or use equivalent terminology as requests to improve the wording. Make the supported edits directly.
+- If part of the request needs evidence the candidate hasn't provided, complete the supported parts or give the closest truthful rewrite. Keep declined false when you make any edits. Mention the specific missing detail in the reply only if it matters to the request.
+- Set declined to true with no edits only when the request cannot be fulfilled in any meaningful way using supported facts or editable units. Ask for the particular evidence that would let you help.
 - reply: one or two friendly sentences saying what you changed, or why you didn't.`;
 
 export type ChatTurn = { role: "user" | "assistant"; text: string };
@@ -83,13 +88,14 @@ export const refineChat: Task<RefineInput, Refinement> = async (provider, input,
   const { request, history, target, viewing, resume, letter, email = [], profile, extracted, tone, facts, posting } = input;
   const looking = viewing ? LOOKING_AT[viewing] : null;
   const answer = await provider.complete({
-    system: system(INSTRUCTIONS, `Current letter tone: ${TONES[tone].label}.`, truthfulness(options.strict), candidateFacts(profile, facts), CREATIVITY[options.creativity], languageRule(options.language), UNTRUSTED_POSTING, NO_EM_DASHES),
+    system: system(INSTRUCTIONS, `Current letter tone: ${TONES[tone].label}.`, truthfulness(options.strict), candidateFacts(profile, facts), CREATIVITY[options.creativity], JOB_ALIGNED_WORDING, languageRule(options.language), UNTRUSTED_POSTING, NO_EM_DASHES, "Before answering, check whether you can make any useful supported edit. If you can, make it and return declined=false even if another part is unsupported."),
     messages: [
       {
         role: "user",
         content: [
           `The candidate's profile:\n${profileForPrompt(profile)}`,
           `The job:\n${jobForPrompt(extracted, null)}`,
+          `The original job description:\n${postingForPrompt(posting)}`,
           `The resume's units:\n${JSON.stringify(resume, null, 2)}`,
           `The cover letter's units:\n${JSON.stringify(letter, null, 2)}`,
           email.length > 0 && `The email's units:\n${JSON.stringify(email, null, 2)}`,

@@ -11,7 +11,9 @@ import {
   applicationFacts,
   candidateFacts,
   CREATIVITY,
+  JOB_ALIGNED_WORDING,
   jobForPrompt,
+  postingForPrompt,
   languageRule,
   NO_EM_DASHES,
   profileForPrompt,
@@ -21,7 +23,7 @@ import {
   type Task,
 } from "./prompt-parts";
 
-export const TAILOR_RESUME_VERSION = "tailor-resume@7";
+export const TAILOR_RESUME_VERSION = "tailor-resume@8";
 
 const answerSchema = z.object({
   summary: z.string(),
@@ -71,6 +73,7 @@ export const tailorResume: Task<TailorInput, Unit[]> = async (provider, { profil
       `Include at most ${maxProjects} projects. Judge relevance from the full descriptions, demonstrated technologies, responsibilities and outcomes; do not rank on the title alone.`,
       pageFit(options.maxPages),
       truthfulness(options.strict),
+      JOB_ALIGNED_WORDING,
       candidateFacts(profile, facts),
       CREATIVITY[options.creativity],
       languageRule(options.language),
@@ -83,6 +86,7 @@ export const tailorResume: Task<TailorInput, Unit[]> = async (provider, { profil
         content: [
           `The candidate's profile:\n${profileForPrompt(profile)}`,
           `The job:\n${jobForPrompt(extracted, match)}`,
+          `The original job description:\n${postingForPrompt(posting)}`,
           applicationFacts(facts),
         ]
           .filter(Boolean)
