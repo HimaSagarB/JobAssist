@@ -174,7 +174,7 @@ describe("the document tabs (E8-2)", () => {
 
   it("shows the tailored resume in its theme, in a single column by default", () => {
     render(<ApplicationView {...props} />);
-    expect(screen.getByText(/^Tailored resume ·/)).toHaveTextContent("Tailored resume · Editorial theme");
+    expect(screen.getByText(/^Tailored resume ·/)).toHaveTextContent("Tailored resume · Change template · Editorial");
     const resume = screen.getByRole("article", { name: "Resume" });
     expect(resume.querySelector('[data-unit="summary"]')).toHaveTextContent(demoResumeUnits()[0].text);
     // Editorial is a single-column theme: nothing to switch.
@@ -224,7 +224,7 @@ describe("the document tabs (E8-2)", () => {
     render(<ApplicationView {...props} />);
     expect(screen.queryByRole("switch", { name: "Sidebar layout" })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Editorial theme" }));
+    await user.click(screen.getByRole("button", { name: "Change template · Editorial" }));
     const menu = screen.getByRole("menu");
     expect(within(menu).getByRole("menuitemradio", { name: "Editorial" })).toHaveAttribute("aria-checked", "true");
     expect(within(menu).getByRole("menuitemradio", { name: "Modern base theme" })).toBeInTheDocument();
@@ -234,17 +234,17 @@ describe("the document tabs (E8-2)", () => {
     // Shown in the new theme while it's saved: Modern has a sidebar, so its layout switch appears.
     await user.click(within(menu).getByRole("menuitemradio", { name: "Modern base theme" }));
     expect(setApplicationTheme).toHaveBeenCalledWith({ id: "app-1", themeId: "modern" });
-    expect(screen.getByRole("button", { name: "Modern theme" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Change template · Modern" })).toBeInTheDocument();
     expect(screen.getByRole("switch", { name: "Sidebar layout" })).toBeInTheDocument();
     await user.click(screen.getByRole("tab", { name: "Cover letter" }));
-    expect(screen.getByRole("button", { name: "Modern theme" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Change template · Modern" })).toBeInTheDocument();
     await act(async () => answer({ ok: true, data: null }));
   });
 
   it("doesn't save the theme the documents already have", async () => {
     const user = userEvent.setup();
     render(<ApplicationView {...props} initialTab="letter" />);
-    await user.click(screen.getByRole("button", { name: "Editorial theme" }));
+    await user.click(screen.getByRole("button", { name: "Change template · Editorial" }));
     await user.click(screen.getByRole("menuitemradio", { name: "Editorial" }));
     expect(setApplicationTheme).not.toHaveBeenCalled();
   });

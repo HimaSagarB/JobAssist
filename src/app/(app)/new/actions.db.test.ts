@@ -139,6 +139,16 @@ describe("createApplication", () => {
     expect(await prisma().job.count({ where: { key: `application:${id}`, applicationId: id } })).toBe(2);
   });
 
+  it("uses the selected template for both documents and follows its layout", async () => {
+    await finishedJobs();
+    const result = await createApplication({ writeJobId: "write-job", details, postingUrl: "", themeId: "modern" });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const application = await prisma().application.findUniqueOrThrow({ where: { id: result.data }, include: { documents: true } });
+    expect(application.followThemeLayout).toBe(true);
+    expect(application.documents.map(document => document.themeId)).toEqual(["modern", "modern"]);
+  });
+
   it("links the Find jobs posting it was started from (E14-8)", async () => {
     await finishedJobs();
     const posting = await prisma().posting.create({ data: { source: "JSEARCH", externalId: "job-1", title: "Senior Product Designer" } });

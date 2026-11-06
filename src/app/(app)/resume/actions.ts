@@ -28,8 +28,8 @@ export const setBaseTheme = action(z.object({ id: z.string().min(1) }), async ({
  * edited in place. Built-in themes can't be changed.
  */
 export const saveTheme = action(
-  themeFieldsSchema.extend({ id: z.string().min(1).nullable() }),
-  async ({ id, ...fields }, { toast }): Promise<ThemeData> => {
+  themeFieldsSchema.extend({ id: z.string().min(1).nullable(), makeBase: z.boolean().default(true) }),
+  async ({ id, makeBase, ...fields }, { toast }): Promise<ThemeData> => {
     const theme = await prisma.$transaction(async (tx) => {
       let saved: ThemeData;
       if (id) {
@@ -40,10 +40,10 @@ export const saveTheme = action(
       } else {
         saved = await tx.theme.create({ data: fields, select: THEME_FIELDS });
       }
-      await saveSettings({ baseThemeId: saved.id }, tx);
+      if (makeBase) await saveSettings({ baseThemeId: saved.id }, tx);
       return saved;
     });
-    toast(`Saved “${theme.name}”. It's now your base resume theme.`);
+    toast(makeBase ? `Saved “${theme.name}”. It's now your base resume theme.` : `Added “${theme.name}” to your saved templates.`);
     revalidatePath("/resume");
     return theme;
   },

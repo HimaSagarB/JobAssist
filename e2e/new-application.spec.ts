@@ -17,10 +17,24 @@ What we're looking for
 
 test("reads a posting, shows the match and writes tailored documents", async ({ page }) => {
   await page.goto("/new?fresh=1");
+  const pdf = await (await page.request.get("/api/pdf?doc=base")).body();
+  await page.getByRole("button", { name: "Upload PDF template" }).click();
+  await page.getByLabel("Resume template PDF (up to 5 MB)").setInputFiles({
+    name: "example.pdf",
+    mimeType: "application/pdf",
+    buffer: pdf,
+  });
+  await page.getByRole("button", { name: "Preview template style" }).click();
+  await expect(page.getByRole("article", { name: "Resume" })).toContainText("Jane Doe");
+  await page.getByRole("button", { name: "Save and use this template" }).click();
+  const template = page.getByLabel("Template for this application");
+  await expect(template.locator("option:checked")).toHaveText("Matched resume template · Saved template");
+  const templateId = await template.inputValue();
   await page.getByLabel("Job posting").fill(POSTING);
   await page.getByRole("button", { name: "Read the posting →" }).click();
 
   await expect(page.getByRole("heading", { name: "How you match" })).toBeVisible();
+  await expect(template).toHaveValue(templateId);
   await expect(page.getByLabel("Company")).toHaveValue("Ledgerly");
   await expect(page.getByLabel("Role")).toHaveValue("Senior Product Designer, Payments");
   await expect(page.getByText("Experience with Kubernetes")).toBeVisible();
@@ -31,7 +45,9 @@ test("reads a posting, shows the match and writes tailored documents", async ({ 
 
   await expect(page.getByRole("heading", { level: 1, name: "Senior Product Designer, Payments · Ledgerly" })).toBeVisible();
   await expect(page.getByRole("article", { name: "Resume" })).toContainText("Jane Doe");
+  await expect(page.getByRole("button", { name: "Change template · Matched resume template" })).toBeVisible();
   await page.getByRole("tab", { name: "Cover letter" }).click();
+  await expect(page.getByRole("button", { name: "Change template · Matched resume template" })).toBeVisible();
   await expect(page.getByText("Payments are where trust is won or lost")).toBeVisible();
   // What you told the AI is the application's first fact (APP-15).
   await page.getByRole("tab", { name: /Job posting/ }).click();

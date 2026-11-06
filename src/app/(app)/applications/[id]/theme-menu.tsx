@@ -33,14 +33,15 @@ export function ThemeMenu({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="text" size="sm" className="data-[state=open]:text-ink">
-          {current.name} theme
+          Change template · {current.name}
           <span aria-hidden="true" className="text-[10px]">
             ▼
           </span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="max-h-(--radix-dropdown-menu-content-available-height) overflow-y-auto">
-        <DropdownMenuLabel>Theme for this resume and cover letter</DropdownMenuLabel>
+        <DropdownMenuLabel>Change resume and cover letter template</DropdownMenuLabel>
+        <DropdownMenuLabel className="font-normal text-muted">Changes the layout using the current text.</DropdownMenuLabel>
         <DropdownMenuRadioGroup value={current.id} onValueChange={(id) => id !== current.id && onChange(id)}>
           {themes.map((theme, index) => (
             <Fragment key={theme.id}>

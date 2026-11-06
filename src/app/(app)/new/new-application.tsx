@@ -27,6 +27,7 @@ import { createApplication, fetchPostingText, handOffToClaude, startReadingPosti
 import { DetailsCard } from "./details-card";
 import { createDraftStore } from "./draft-store";
 import { MatchCard } from "./match-card";
+import { ApplicationTemplatePicker, type TemplateOptions } from "./application-template-picker";
 import { TailoringCard } from "./tailoring-card";
 import { JobProgress, jobStep } from "./job-progress";
 
@@ -49,6 +50,7 @@ export type Draft = {
   step: "paste" | "reading" | "review" | "creating";
   posting: string;
   postingUrl: string;
+  themeId?: string;
   linkImport?: { site: string; source: "structured" | "page" } | null;
   readJobId: string | null;
   /** The posting text that was read, so going back and on again doesn't read it twice. */
@@ -141,6 +143,7 @@ export type NewApplicationProps = {
   samplePosting: string | null;
   /** Settings → default cover letter tone (SET-6). */
   defaultTone: Tone;
+  templateOptions?: TemplateOptions;
   /** "+ New application": start over, whatever the tab kept. */
   fresh?: boolean;
   /** "Start application" on Find jobs: start over from this posting. */
@@ -148,7 +151,7 @@ export type NewApplicationProps = {
 };
 
 /** The new application flow (E7): paste → read → review → create. */
-export function NewApplication({ aiReady, writeInClaude = false, samplePosting, defaultTone, fresh = false, fromPosting = null }: NewApplicationProps) {
+export function NewApplication({ aiReady, writeInClaude = false, samplePosting, defaultTone, templateOptions, fresh = false, fromPosting = null }: NewApplicationProps) {
   const [initial] = useState<Draft>(() => ({
     step: "paste",
     posting: "",
@@ -196,6 +199,20 @@ export function NewApplication({ aiReady, writeInClaude = false, samplePosting, 
     router.replace("/new");
   }, [fromPosting, initial, router]);
   const [starting, setStarting] = useState(false);
+  const [addedTemplates, setAddedTemplates] = useState<TemplateOptions["themes"]>([]);
+  const templatePicker = (id: string) => templateOptions && !writeInClaude && (
+    <ApplicationTemplatePicker
+      {...templateOptions}
+      id={id}
+      themes={[...templateOptions.themes, ...addedTemplates.filter(theme => !templateOptions.themes.some(saved => saved.id === theme.id))]}
+      selectedId={draft.themeId}
+      onSelect={(themeId) => update({ themeId })}
+      onAdd={(theme) => {
+        setAddedTemplates(current => [...current, theme]);
+        update({ themeId: theme.id });
+      }}
+    />
+  );
   const [fetching, setFetching] = useState(false);
   const [fetchError, setFetchError] = useState("");
   const [readRevision, setReadRevision] = useState(0);
@@ -303,6 +320,7 @@ export function NewApplication({ aiReady, writeInClaude = false, samplePosting, 
       writeJobId,
       details: draft.details,
       postingUrl: draft.postingUrl,
+      themeId: draft.themeId,
       postingId: draft.postingId ?? null,
       startupId: draft.startupId ?? null,
     });
@@ -386,6 +404,7 @@ export function NewApplication({ aiReady, writeInClaude = false, samplePosting, 
                   </Link>
                 </p>
               )}
+              {templatePicker("posting-template")}
               <Card className="flex flex-col gap-5">
                 <div className="flex flex-col gap-2">
                   <div className="flex items-end gap-3">
@@ -469,6 +488,7 @@ export function NewApplication({ aiReady, writeInClaude = false, samplePosting, 
             <>
               <DetailsCard details={draft.details} onChange={(details) => update({ details })} />
               <MatchCard match={draft.read.match} requirements={draft.read.extracted.requirements} onAddSkill={(index, skill) => void addToProfile(index, skill)} />
+              {templatePicker("review-template")}
               <TailoringCard tone={draft.tone} note={draft.note} onTone={(tone) => update({ tone })} onNote={(note) => update({ note })} />
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <Button variant="text" onClick={() => update({ step: "paste" })}>

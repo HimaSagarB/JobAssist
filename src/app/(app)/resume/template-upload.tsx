@@ -1,14 +1,15 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { themeFieldsSchema, type ThemeFields } from "@/lib/theme-file";
 
-export function TemplateUpload({ onPreview }: { onPreview: (theme: ThemeFields) => void }) {
+export function TemplateUpload({ onPreview, forApplication = false }: { onPreview: (theme: ThemeFields) => void; forApplication?: boolean }) {
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const requestId = useRef(0);
+  useEffect(() => () => { requestId.current += 1; }, []);
 
   const analyze = async () => {
     if (!file) return;
@@ -30,7 +31,7 @@ export function TemplateUpload({ onPreview }: { onPreview: (theme: ThemeFields) 
   return <section className="space-y-4" aria-labelledby="template-upload-title">
     <h2 id="template-upload-title" className="font-serif text-xl">Upload your own template</h2>
     <p className="text-sm text-muted">Choose a resume PDF as a style reference. JobAssist reads its first page locally and measures margins, type sizes, line spacing, header alignment, columns and recognized section order.</p>
-    <p className="rounded-card bg-card p-3 text-sm">JobAssist reads the PDF locally for formatting. Save theme adds a new theme and makes it the default for your base resume. The preview uses your existing knowledge base for resume content.</p>
+    <p className="rounded-card bg-card p-3 text-sm">JobAssist reads the PDF locally for formatting. {forApplication ? "Saving adds a reusable template and selects it for this application." : "Save theme adds a new theme and makes it the default for your base resume."} The preview uses your existing knowledge base for resume content.</p>
     <label className="block space-y-2"><span className="text-sm font-medium">Resume template PDF (up to 5 MB)</span>
       <input type="file" accept=".pdf,application/pdf" disabled={busy} aria-describedby="template-upload-help" onChange={event => { setFile(event.target.files?.[0] ?? null); setError(""); }} className="block w-full text-sm" />
     </label>

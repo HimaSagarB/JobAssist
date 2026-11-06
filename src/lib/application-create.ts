@@ -62,12 +62,13 @@ export type CreateApplicationInput = {
   tone: Tone;
   note: string;
   claim: ApplicationClaim;
+  themeId?: string;
 };
 
 const CLAIMED = "application:";
 
 /** Creates the application once; creating again with the same claim returns the one that exists. */
-export async function createApplicationFromDocuments({ reading, documents, match, details, postingUrl, tone, note, claim }: CreateApplicationInput): Promise<string> {
+export async function createApplicationFromDocuments({ reading, documents, match, details, postingUrl, tone, note, claim, themeId }: CreateApplicationInput): Promise<string> {
   const [settings, profile] = await Promise.all([loadSettings(), loadProfile()]);
   const { extracted, extractedWith, matchedWith } = reading;
   const language = settings.docLanguage ?? extracted.language ?? "English";
@@ -118,6 +119,9 @@ export async function createApplicationFromDocuments({ reading, documents, match
       if (count === 0) throw new ActionError("That posting is no longer waiting for a draft.");
     }
 
+    if (themeId && !(await tx.theme.findUnique({ where: { id: themeId }, select: { id: true } }))) {
+      throw new ActionError("That template was deleted. Go back to the details and choose another template.");
+    }
     const application = await tx.application.create({
       data: {
         // An agent draft stays on the Agent screen until it's approved (#195).
@@ -131,6 +135,7 @@ export async function createApplicationFromDocuments({ reading, documents, match
         deadline: details.deadline ? new Date(`${details.deadline}T00:00:00Z`) : null,
         postingUrl,
         postingText: reading.posting,
+        ...(themeId ? { followThemeLayout: true } : {}),
         extracted,
         extractedWith,
         match,
@@ -145,14 +150,14 @@ export async function createApplicationFromDocuments({ reading, documents, match
             {
               kind: "RESUME",
               units: documents.resume,
-              themeId: settings.baseThemeId,
+              themeId: themeId ?? settings.baseThemeId,
               writtenWith: documents.resumeWith,
               versions: { create: { units: documents.resume, cause: "WRITTEN" } },
             },
             {
               kind: "COVER_LETTER",
               units: letter,
-              themeId: settings.baseThemeId,
+              themeId: themeId ?? settings.baseThemeId,
               writtenWith: documents.letterWith,
               versions: { create: { units: letter, cause: "WRITTEN" } },
             },
